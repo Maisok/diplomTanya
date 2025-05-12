@@ -1,0 +1,189 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Support\Facades\Auth;
+use App\Models\Service;
+use App\Models\Staff;
+use App\Models\Category;
+use App\Models\Appointment;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+
+class ServiceController extends Controller
+{
+    public function index()
+    {
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->route('home');
+        }
+
+        $services = Service::with(['staff', 'category'])->get();
+        return view('admin.service', compact('services'));  
+    }
+
+    public function create()
+    {
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->route('home');
+        }
+
+        $staff = Staff::all();
+        $categories = Category::all();
+        return view('admin.createservice', compact('staff', 'categories'));
+    }
+
+    public function store(Request $request)
+    {
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->route('home');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'description' => 'required|string|max:500',
+            'price' => 'required|numeric|between:0,99999.99',
+            'duration' => 'required|integer|min:5|max:300',
+            'category_id' => 'required|exists:categories,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'staff_id' => 'required|array',
+            'staff_id.*' => 'exists:staff,id'
+        ], [
+            'name.required' => 'Название услуги обязательно для заполнения',
+            'name.max' => 'Название услуги не должно превышать 100 символов',
+            'description.required' => 'Описание услуги обязательно для заполнения',
+            'description.max' => 'Описание услуги не должно превышать 500 символов',
+            'price.required' => 'Цена услуги обязательна для заполнения',
+            'price.between' => 'Цена должна быть между 0 и 99999.99',
+            'duration.required' => 'Продолжительность услуги обязательна для заполнения',
+            'duration.min' => 'Продолжительность должна быть не менее 5 минут',
+            'duration.max' => 'Продолжительность должна быть не более 300 минут',
+            'category_id.required' => 'Необходимо выбрать категорию',
+            'category_id.exists' => 'Выбранная категория не существует',
+            'image.image' => 'Файл должен быть изображением',
+            'image.mimes' => 'Допустимые форматы изображения: jpeg, png, jpg, gif',
+            'image.max' => 'Максимальный размер изображения 2MB',
+            'staff_id.required' => 'Необходимо выбрать хотя бы одного сотрудника',
+            'staff_id.*.exists' => 'Выбранный сотрудник не существует'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $service = Service::create($request->except('staff_id'));
+
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('services', 'public');
+                $service->image = $imagePath;
+                $service->save();
+            }
+
+            $service->staff()->attach($request->staff_id);
+
+            DB::commit();
+
+            return redirect()->route('admin.services.index')
+                ->with('success', 'Услуга успешно добавлена.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()
+                ->with('error', 'Произошла ошибка при создании услуги: ' . $e->getMessage());
+        }
+    }
+
+    public function edit(Service $service)
+    {
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->route('home');
+        }
+
+        $staff = Staff::all();
+        $categories = Category::all();
+        return view('admin.editservice', compact('service', 'staff', 'categories'));
+    }
+
+    public function update(Request $request, Service $service)
+    {
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->route('home');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'description' => 'required|string|max:500',
+            'price' => 'required|numeric|between:0,99999.99',
+            'duration' => 'required|integer|min:5|max:300',
+            'category_id' => 'required|exists:categories,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'staff_id' => 'required|array',
+            'staff_id.*' => 'exists:staff,id'
+        ], [
+            // Сообщения об ошибках такие же как в store
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $service->update($request->except(['staff_id', 'image']));
+
+            if ($request->hasFile('image')) {
+                // Удаляем старое изображение если оно есть
+                if ($service->image) {
+                    Storage::disk('public')->delete($service->image);
+                }
+                
+                $imagePath = $request->file('image')->store('services', 'public');
+                $service->image = $imagePath;
+                $service->save();
+            }
+
+            $service->staff()->sync($request->staff_id);
+
+            DB::commit();
+
+            return redirect()->route('admin.services.index')
+                ->with('success', 'Услуга успешно обновлена.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()
+                ->with('error', 'Произошла ошибка при обновлении услуги: ' . $e->getMessage());
+        }
+    }
+
+    public function destroy(Service $service)
+    {
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->route('home');
+        }
+
+        // Проверяем, есть ли связанные записи
+        if ($service->appointments()->exists()) {
+            return redirect()->route('admin.services.index')
+                ->with('error', 'Нельзя удалить услугу, так как у нее есть связанные записи.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Удаляем связанное изображение
+            if ($service->image) {
+                Storage::disk('public')->delete($service->image);
+            }
+            
+            $service->staff()->detach();
+            $service->delete();
+
+            DB::commit();
+
+            return redirect()->route('admin.services.index')
+                ->with('success', 'Услуга успешно удалена.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Произошла ошибка при удалении услуги: ' . $e->getMessage());
+        }
+    }
+}

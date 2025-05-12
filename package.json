@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "cloudflared": "^0.7.0",
+    "localtunnel": "^2.0.2"
+  }
+}
