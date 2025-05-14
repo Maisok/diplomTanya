@@ -1,3 +1,4 @@
+@vite('resources/css/app.css')
 <div class="bg-gradient-to-r from-[#3a556a] to-[#4a6b7a] shadow-lg">
   <div class="container mx-auto flex items-center justify-between py-4 px-6">
     <!-- Logo -->
