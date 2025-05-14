@@ -170,11 +170,6 @@
         
         <div id="map" class="mb-8"></div>
         
-        <div class="text-center">
-          <button class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg px-6 py-2 shadow-md transition-all duration-300">
-            Все филиалы
-          </button>
-        </div>
       </div>
     </div>
   </section>

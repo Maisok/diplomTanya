@@ -24,7 +24,7 @@ class UserFactory extends Factory
     {
         return [
             'name' => $this->faker->name,
-            'phone' => $this->faker->phoneNumber,
+            'phone' => fake()->numerify('+7##########'),
             'password' => bcrypt('password'), // Пароль по умолчанию
             'role' => 'user', // Роль по умолчанию
             'remember_token' => Str::random(10),

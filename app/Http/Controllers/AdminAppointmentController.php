@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Auth;
 use App\Models\Appointment;
 use App\Models\Staff;
 use App\Models\Service;
@@ -11,6 +11,10 @@ class AdminAppointmentController extends Controller
 {
     public function index(Request $request)
     {
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->route('home')->with('error', 'Доступ запрещен');
+        }
+
         $appointments = Appointment::with(['user', 'service', 'staff'])
             ->when($request->staff_id, function($query, $staff_id) {
                 return $query->where('staff_id', $staff_id);
@@ -32,6 +36,11 @@ class AdminAppointmentController extends Controller
     
     public function activate($id)
     {
+
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->route('home')->with('error', 'Доступ запрещен');
+        } 
+
         $appointment = Appointment::findOrFail($id);
         $appointment->status = 'active';
         $appointment->save();
@@ -41,6 +50,9 @@ class AdminAppointmentController extends Controller
     
     public function complete($id)
     {
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->route('home')->with('error', 'Доступ запрещен');
+        }
         $appointment = Appointment::findOrFail($id);
         $appointment->status = 'completed';
         $appointment->save();
@@ -50,6 +62,9 @@ class AdminAppointmentController extends Controller
     
     public function cancel($id)
     {
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->route('home')->with('error', 'Доступ запрещен');
+        }
         $appointment = Appointment::findOrFail($id);
         $appointment->update([
             'status' => 'cancelled',

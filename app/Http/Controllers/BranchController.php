@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use Illuminate\Http\Request;
@@ -23,6 +23,10 @@ class BranchController extends Controller
 
     public function store(Request $request)
     {
+
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->route('home')->with('error', 'Доступ запрещен');
+        }
         $validated = $this->validateSchedule($request);
         
         $imagePath = $request->file('image')->store('branches', 'public');
