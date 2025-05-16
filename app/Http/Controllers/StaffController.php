@@ -101,7 +101,8 @@ class StaffController extends Controller
             ],
             'password' => 'required|string|min:8',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'branch_id' => 'nullable|exists:branches,id'
+            'branch_id' => 'nullable|exists:branches,id',
+            'status' => 'required|in:active,inactive'
         ], [
             'first_name.regex' => 'Имя должно содержать только буквы и пробелы',
             'last_name.regex' => 'Фамилия должна содержать только буквы и пробелы',
@@ -124,7 +125,8 @@ class StaffController extends Controller
             'middle_name' => $validated['middle_name'],
             'phone' => $formattedPhone,
             'password' => Hash::make($validated['password']),
-            'branch_id' => $validated['branch_id']
+            'branch_id' => $validated['branch_id'], 
+            'status' => $validated['status']
         ]);
 
         if ($request->hasFile('image')) {
@@ -189,7 +191,8 @@ class StaffController extends Controller
             'password' => 'nullable|string|min:8',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'branch_id' => 'nullable|exists:branches,id',
-            'remove_image' => 'nullable|boolean'
+            'remove_image' => 'nullable|boolean',
+            'status' => 'required|in:active,inactive'
         ], [
             'first_name.regex' => 'Имя должно содержать только буквы и пробелы',
             'last_name.regex' => 'Фамилия должна содержать только буквы и пробелы',
@@ -211,7 +214,8 @@ class StaffController extends Controller
         'last_name' => $validated['last_name'],
         'middle_name' => $validated['middle_name'],
         'phone' => $formattedPhone,
-        'branch_id' => $validated['branch_id']
+        'branch_id' => $validated['branch_id'], 
+        'status' => $validated['status'],
     ];
 
     // Обновляем пароль, если он был указан

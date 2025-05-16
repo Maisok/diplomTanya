@@ -143,6 +143,14 @@
                             @endforeach
                         </div>
                     </div>
+
+                    <div class="form-group">
+                        <label for="status">Статус</label>
+                        <select name="status" id="status" class="form-control">
+                            <option value="active" {{ old('status', $branch->status ?? '') == 'active' ? 'selected' : '' }}>Активный</option>
+                            <option value="inactive" {{ old('status', $branch->status ?? '') == 'inactive' ? 'selected' : '' }}>Не активный</option>
+                        </select>
+                    </div>
                     
                     <!-- Кнопки -->
                     <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">

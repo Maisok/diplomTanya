@@ -97,6 +97,7 @@ class BranchController extends Controller
                     }
                 }
             ],
+            'status' => 'required|in:active,inactive',
     
             // Понедельник
             'monday_open' => 'nullable|date_format:H:i|after_or_equal:08:00|before_or_equal:21:00',

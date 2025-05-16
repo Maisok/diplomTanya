@@ -157,6 +157,13 @@
                         @enderror
                     </div>
                 </div>
+                <div class="form-group">
+                    <label for="status">Статус</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="active" {{ old('status', $service->status ?? '') == 'active' ? 'selected' : '' }}>Активна</option>
+                        <option value="inactive" {{ old('status', $service->status ?? '') == 'inactive' ? 'selected' : '' }}>Не активна</option>
+                    </select>
+                </div>
 
                 <div>
                     <label for="image" class="block text-gray-300 mb-3 font-medium">Изображение</label>

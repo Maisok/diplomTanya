@@ -184,6 +184,14 @@
                     @enderror
                 </div>
 
+                <div class="form-group">
+                    <label for="status">Статус</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="active" {{ old('status', $service->status ?? '') == 'active' ? 'selected' : '' }}>Активна</option>
+                        <option value="inactive" {{ old('status', $service->status ?? '') == 'inactive' ? 'selected' : '' }}>Не активна</option>
+                    </select>
+                </div>
+
                 <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
                     <a href="{{ route('admin.services.index') }}" 
                        class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-6 py-3 rounded-lg transition-all duration-300 shadow-md text-center flex items-center justify-center">

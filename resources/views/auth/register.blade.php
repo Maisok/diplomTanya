@@ -45,41 +45,45 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label for="name" class="block text-sm font-medium text-gray-300 mb-1">Имя*</label>
-            <input 
-              type="text" 
-              id="name" 
-              name="name" 
-              placeholder="Иван" 
-              maxlength="50" 
-              class="input-field w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:border-white/40 focus:outline-none"
-              value="{{ old('name') }}"
-              required
-              oninput="formatName(this)"
-            >
-            @error('name')
-              <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
-            @enderror
+              <label for="name" class="block text-sm font-medium text-gray-300 mb-1">Имя*</label>
+              <input 
+                  type="text" 
+                  id="name" 
+                  name="name" 
+                  placeholder="Иван" 
+                  maxlength="50" 
+                  class="input-field w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:border-white/40 focus:outline-none"
+                  value="{{ old('name') }}"
+                  required
+                  oninput="formatName(this)"
+                  pattern="^[А-ЯЁA-Z][а-яёa-z\-]+$"
+                  title="Имя должно начинаться с заглавной буквы"
+              >
+              @error('name')
+                  <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+              @enderror
           </div>
           
           <div>
-            <label for="surname" class="block text-sm font-medium text-gray-300 mb-1">Фамилия*</label>
-            <input 
-              type="text" 
-              id="surname" 
-              name="surname" 
-              placeholder="Иванов" 
-              maxlength="50" 
-              class="input-field w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:border-white/40 focus:outline-none"
-              value="{{ old('surname') }}"
-              required
-              oninput="formatName(this)"
-            >
-            @error('surname')
-              <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
-            @enderror
+              <label for="surname" class="block text-sm font-medium text-gray-300 mb-1">Фамилия*</label>
+              <input 
+                  type="text" 
+                  id="surname" 
+                  name="surname" 
+                  placeholder="Иванов" 
+                  maxlength="50" 
+                  class="input-field w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:border-white/40 focus:outline-none"
+                  value="{{ old('surname') }}"
+                  required
+                  oninput="formatName(this)"
+                  pattern="^[А-ЯЁA-Z][а-яёa-z\-]+$"
+                  title="Фамилия должна начинаться с заглавной буквы"
+              >
+              @error('surname')
+                  <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+              @enderror
           </div>
-        </div>
+      </div>
 
         <div>
           <label for="phone" class="block text-sm font-medium text-gray-300 mb-1">Телефон*</label>
@@ -95,7 +99,7 @@
             required
           >
           @error('phone')
-            <p class="mt-1 text-sm text-red-400">{{ $msessage }}</p>
+            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
           @enderror
         </div>
 
@@ -206,63 +210,71 @@
     function capitalizeFirstLetter(string) {
       return string.charAt(0).toUpperCase() + string.slice(1);
     }
-
-    function formatName(input) {
-      input.value = input.value.replace(/[^a-zA-Zа-яА-Я\s-]/g, '');
-      if (input.value.length > 0) {
-        input.value = capitalizeFirstLetter(input.value);
-      }
-    }
-
     function formatPhoneNumber(input) {
-      let phone = input.value.replace(/\D/g, '');
-      let formattedPhone = '';
-
-      if (phone.length > 0) {
+    let phone = input.value.replace(/\D/g, '');
+    let formattedPhone = '';
+    
+    if (phone.length > 0) {
         formattedPhone = '8 ';
-      }
-      if (phone.length > 1) {
-        formattedPhone += phone.substring(1, 4) + ' ';
-      }
-      if (phone.length > 4) {
-        formattedPhone += phone.substring(4, 7) + ' ';
-      }
-      if (phone.length > 7) {
-        formattedPhone += phone.substring(7, 9) + ' ';
-      }
-      if (phone.length > 9) {
-        formattedPhone += phone.substring(9, 11);
-      }
+        if (phone.length > 1) {
+            formattedPhone += phone.substring(1, 4) + ' ';
+        }
+        if (phone.length > 4) {
+            formattedPhone += phone.substring(4, 7) + ' ';
+        }
+        if (phone.length > 7) {
+            formattedPhone += phone.substring(7, 9) + ' ';
+        }
+        if (phone.length > 9) {
+            formattedPhone += phone.substring(9, 11);
+        }
+    }
+    
+    input.value = formattedPhone;
+}
 
-      input.value = formattedPhone;
+function formatName(input) {
+    // Удаляем все кроме букв, пробелов и дефисов
+    input.value = input.value.replace(/[^a-zA-Zа-яА-ЯёЁ\s-]/g, '');
+    
+    // Делаем первую букву заглавной, остальные - строчными
+    if (input.value.length > 0) {
+        input.value = input.value.split(/\s+/).map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+    }
+}
+
+function validateForm() {
+    const nameInput = document.getElementById('name');
+    const surnameInput = document.getElementById('surname');
+    const phoneInput = document.getElementById('phone');
+    const phonePattern = /^8 \d{3} \d{3} \d{2} \d{2}$/;
+    const namePattern = /^[А-ЯЁA-Z][а-яёa-z\-]+$/u;
+
+    // Валидация имени
+    if (!namePattern.test(nameInput.value)) {
+        alert('Имя должно начинаться с заглавной буквы и содержать только буквы и дефисы');
+        nameInput.focus();
+        return false;
     }
 
-    function validateForm() {
-      const nameInput = document.getElementById('name');
-      const surnameInput = document.getElementById('surname');
-      const phoneInput = document.getElementById('phone');
-      const phonePattern = /^8 \d{3} \d{3} \d{2} \d{2}$/;
-
-      // Валидация имени
-      if (!/^[a-zA-Zа-яА-Я\s-]+$/.test(nameInput.value)) {
-        alert('Имя должно содержать только буквы, пробелы и дефисы');
+    // Валидация фамилии
+    if (!namePattern.test(surnameInput.value)) {
+        alert('Фамилия должна начинаться с заглавной буквы и содержать только буквы и дефисы');
+        surnameInput.focus();
         return false;
-      }
+    }
 
-      // Валидация фамилии
-      if (!/^[a-zA-Zа-яА-Я\s-]+$/.test(surnameInput.value)) {
-        alert('Фамилия должна содержать только буквы, пробелы и дефисы');
-        return false;
-      }
-
-      // Валидация телефона
-      if (!phonePattern.test(phoneInput.value)) {
+    // Валидация телефона
+    if (!phonePattern.test(phoneInput.value)) {
         alert('Номер телефона должен быть в формате 8 999 999 99 99');
+        phoneInput.focus();
         return false;
-      }
-
-      return true;
     }
+
+    return true;
+}
   </script>
 </body>
 </html>

@@ -115,6 +115,12 @@
                     </div>
                   @endforeach
                 </div>
+
+                @if($branch->status === 'active')
+                <span class="badge badge-success">Работает</span>
+            @else
+                <span class="badge badge-secondary">Не работает</span>
+            @endif
                 
                 <div class="flex space-x-3">
                   <a href="{{ route('admin.branches.edit', $branch->id) }}" 

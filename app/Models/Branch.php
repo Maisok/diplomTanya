@@ -18,7 +18,8 @@ class Branch extends Model
         'thursday_open', 'thursday_close',
         'friday_open', 'friday_close',
         'saturday_open', 'saturday_close',
-        'sunday_open', 'sunday_close'
+        'sunday_open', 'sunday_close', 
+        'status'
     ];
 
     public function staff()

@@ -39,10 +39,32 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
-
+    
+        $messages = [
+            'name.required' => 'Поле "Имя" обязательно для заполнения',
+            'name.max' => 'Имя не должно превышать 50 символов',
+            'name.regex' => 'Имя должно начинаться с заглавной буквы и содержать только буквы и дефисы',
+            'surname.max' => 'Фамилия не должна превышать 50 символов',
+            'surname.regex' => 'Фамилия должна начинаться с заглавной буквы и содержать только буквы и дефисы',
+            'phone.required' => 'Поле "Телефон" обязательно для заполнения',
+            'phone.regex' => 'Телефон должен быть в формате: 8 999 123 45 67',
+            'phone.unique' => 'Этот номер телефона уже используется',
+            'password.min' => 'Пароль должен содержать минимум 8 символов',
+        ];
+    
         $request->validate([
-            'name' => 'required|string|max:50',
-            'surname' => 'nullable|string|max:50',
+            'name' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^[А-ЯЁA-Z][а-яёa-z\-]+$/u'
+            ],
+            'surname' => [
+                'nullable',
+                'string',
+                'max:50',
+                'regex:/^[А-ЯЁA-Z][а-яёa-z\-]+$/u'
+            ],
             'phone' => [
                 'required',
                 'string',
@@ -51,18 +73,18 @@ class ProfileController extends Controller
                 'regex:/^8 \d{3} \d{3} \d{2} \d{2}$/'
             ],
             'password' => 'nullable|string|min:8',
-        ]);
-
+        ], $messages);
+    
         $user->name = $request->name;
         $user->surname = $request->surname;
         $user->phone = $request->phone;
-
+    
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
-
+    
         $user->save();
-
+    
         return redirect()->route('profile.show')->with('success', 'Профиль успешно обновлен.');
     }
 

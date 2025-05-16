@@ -105,6 +105,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Фото</th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Филиал</th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Действия</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Статус</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -153,6 +154,13 @@
                                         </button>
                                     </form>
                                 </div>
+                            </td>
+                            <td>
+                                @if($employee->status === 'active')
+                                    <span class="text-sm font-medium text-white">Работает</span>
+                                @else
+                                    <span class="text-sm font-medium text-white">Не работает</span>
+                                @endif
                             </td>
                         </tr>
                         @endforeach

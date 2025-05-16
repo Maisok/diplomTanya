@@ -7,34 +7,45 @@ use App\Models\Service;
 use App\Models\Category;
 use App\Models\Branch;
 use App\Models\Appointment;
+use Illuminate\Support\Facades\Cache;
 
 class ServiceShowController extends Controller
 {
     public function index(Request $request)
     {
-        $categories = Category::all();
-        
-        $services = Service::query()
-            ->when($request->category, function($query, $category) {
+        // Получаем только те категории, у которых есть активные услуги
+        $categories = Category::has('services', '>', 0)
+            ->whereHas('services', function ($query) {
+                $query->where('status', 'active');
+            })
+            ->paginate(6); // Показываем по 6 категорий на странице
+    
+        // Выбираем только активные услуги с фильтрацией по категории и поиску
+        $services = Service::where('status', 'active')
+            ->when($request->category, function ($query, $category) {
                 $query->where('category_id', $category);
             })
-            ->when($request->search, function($query, $search) {
+            ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%");
             })
             ->get();
-
+    
         return view('services', compact('services', 'categories'));
     }
 
     public function show(Service $service)
     {
-        $branches = Branch::whereHas('staff.services', function($query) use ($service) {
-            $query->where('services.id', $service->id);
-        })->get(['id', 'address']);
+        // Получаем только активные филиалы, где есть сотрудники с этой услугой
+        $branches = Branch::where('status', 'active')
+            ->whereHas('staff.services', function($query) use ($service) {
+                $query->where('services.id', $service->id);
+            })
+            ->get(['id', 'address']);
     
-        // Получаем branch_id из запроса, если он есть
+        // Получаем branch_id из запроса
         $branchId = request()->input('branch_id');
     
+        // Получаем записи только на будущее время и по выбранному филиалу (если указан)
         $appointments = Appointment::with(['staff', 'user'])
             ->where('service_id', $service->id)
             ->when($branchId, function($query) use ($branchId) {
@@ -45,7 +56,7 @@ class ServiceShowController extends Controller
             ->where('appointment_time', '>=', now())
             ->orderBy('appointment_time')
             ->get();
-        
+    
         return view('cart', [
             'service' => $service,
             'branches' => $branches,

@@ -149,6 +149,14 @@
                         </p>
                     @enderror
                 </div>
+
+                <div class="form-group">
+                    <label for="status">Статус</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="active" {{ old('status', $branch->status ?? '') == 'active' ? 'selected' : '' }}>Активный</option>
+                        <option value="inactive" {{ old('status', $branch->status ?? '') == 'inactive' ? 'selected' : '' }}>Не активный</option>
+                    </select>
+                </div>
                 
                 <!-- Адрес филиала -->
                 <div class="mb-8">

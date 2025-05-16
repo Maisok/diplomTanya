@@ -183,11 +183,14 @@ Route::prefix('admin')->middleware(['auth', PreventConcurrentLogins::class.':web
  
 Route::get('/branches/{branch}/staff', function(Branch $branch, Request $request) {
     try {
+        // Проверяем наличие service_id
         if (!$request->has('service_id')) {
             return response()->json(['error' => 'Service ID is required'], 400);
         }
 
+        // Получаем сотрудников по филиалу и сервису, с учетом статуса
         $staff = $branch->staff()
+            ->where('status', 'active') // <-- Учет статуса
             ->whereHas('services', function($query) use ($request) {
                 $query->where('services.id', $request->service_id);
             })
@@ -197,7 +200,7 @@ Route::get('/branches/{branch}/staff', function(Branch $branch, Request $request
         return response()->json($staff);
 
     } catch (\Exception $e) {
-        \Log::error("Error in /branches/{branch}/staff: " . $e->getMessage());
+        Log::error("Error in /branches/{branch}/staff: " . $e->getMessage());
         return response()->json(['error' => 'Server error'], 500);
     }
 });

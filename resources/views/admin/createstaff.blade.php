@@ -152,6 +152,14 @@
                 </div>
 
                 <div>
+                    <label for="status">Статус</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="active" {{ old('status', $staff->status ?? '') == 'active' ? 'selected' : '' }}>Работает</option>
+                        <option value="inactive" {{ old('status', $staff->status ?? '') == 'inactive' ? 'selected' : '' }}>Не работает</option>
+                    </select>
+                </div>
+
+                <div>
                     <label for="password" class="block text-gray-300 mb-3 font-medium">Пароль*</label>
                     <input type="password" name="password" id="password" required
                            class="w-full input-field p-3 rounded-lg focus:outline-none @error('password') input-error @enderror"

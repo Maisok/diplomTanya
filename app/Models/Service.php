@@ -17,7 +17,8 @@ protected $fillable = [
     'duration', // Добавляем
     'image',
     'staff_id',
-    'category_id'
+    'category_id', 
+    'status'
 ];
 
     public function staff()

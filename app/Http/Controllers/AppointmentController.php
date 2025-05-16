@@ -221,7 +221,7 @@ class AppointmentController extends Controller
         }
     
         // Проверка, что запись не после закрытия
-        $lastPossibleStart = $closeTime->copy()->subMinutes($endTime->diffInMinutes($startTime));
+        $lastPossibleStart = $closeTime->copy()->addMinutes($endTime->diffInMinutes($startTime));
         
         if ($startTime->gt($lastPossibleStart)) {
             throw new \Exception('Филиал закрывается в '.$closeTime->format('H:i').'. Последняя возможная запись: '.$lastPossibleStart->format('H:i'));

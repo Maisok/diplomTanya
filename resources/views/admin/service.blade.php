@@ -133,6 +133,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider photo-cell">Фото</th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Сотрудник</th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider duration-cell">Длительность</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Статус</th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider actions-cell">Действия</th>
                         </tr>
                     </thead>
@@ -166,6 +167,13 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-white duration-cell">
                                 <span class="bg-purple-500/20 text-purple-200 px-2 py-1 rounded-full">{{ $service->duration }} мин</span>
+                            </td>
+                            <td>
+                                @if($service->status === 'active')
+                                    <span class="badge badge-success">Активно</span>
+                                @else
+                                    <span class="badge badge-secondary">Не активно</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium actions-cell">
                                 <div class="flex space-x-4">

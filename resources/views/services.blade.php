@@ -115,20 +115,26 @@
       <!-- Категории -->
       <div class="flex flex-wrap gap-3 justify-center">
         <a 
-          href="{{ route('showservice') }}" 
-          class="category-btn px-6 py-2 rounded-full {{ !request('category') ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md' : 'bg-white/10 hover:bg-white/20' }}"
+            href="{{ route('showservice') }}" 
+            class="category-btn px-6 py-2 rounded-full {{ !request('category') ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md' : 'bg-white/10 hover:bg-white/20' }}"
         >
-          Все услуги
+            Все услуги
         </a>
+    
         @foreach($categories as $category)
-          <a 
-            href="{{ route('showservice', ['category' => $category->id, 'search' => request('search')]) }}" 
-            class="category-btn px-6 py-2 rounded-full {{ request('category') == $category->id ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md' : 'bg-white/10 hover:bg-white/20' }}"
-          >
-            {{ $category->name }}
-          </a>
+            <a 
+                href="{{ route('showservice', ['category' => $category->id, 'search' => request('search')]) }}" 
+                class="category-btn px-6 py-2 rounded-full {{ request('category') == $category->id ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md' : 'bg-white/10 hover:bg-white/20' }}"
+            >
+                {{ $category->name }}
+            </a>
         @endforeach
-      </div>
+    </div>
+    
+    <!-- Пагинация -->
+    <div class="mt-8">
+        {{ $categories->appends(['search' => request('search'), 'category' => request('category')])->links() }}
+    </div>
     </div>
 
     <!-- Список услуг -->

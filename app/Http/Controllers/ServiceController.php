@@ -48,7 +48,8 @@ class ServiceController extends Controller
             'category_id' => 'required|exists:categories,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'staff_id' => 'required|array',
-            'staff_id.*' => 'exists:staff,id'
+            'staff_id.*' => 'exists:staff,id', 
+            'status' => 'required|in:active,inactive'
         ], [
             'name.required' => 'Название услуги обязательно для заполнения',
             'name.max' => 'Название услуги не должно превышать 100 символов',

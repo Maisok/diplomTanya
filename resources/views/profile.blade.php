@@ -118,57 +118,64 @@
       <div class="profile-card p-8 mb-12">
         <h2 class="text-2xl font-bold mb-6">Редактирование профиля</h2>
         
-        <form action="{{ route('profile.update') }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form action="{{ route('profile.update') }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6" onsubmit="return validateProfileForm()">
           @csrf
           
           <div>
-            <label for="name" class="block text-sm font-medium mb-2">Имя*</label>
-            <input type="text" name="name" id="name" maxlength="50" required
-                   value="{{ old('name', $user->name) }}"
-                   class="input-field w-full px-4 py-3 rounded-lg">
-            @error('name')
-              <span class="text-red-400 text-sm">{{ $message }}</span>
-            @enderror
+              <label for="name" class="block text-sm font-medium mb-2">Имя*</label>
+              <input type="text" name="name" id="name" maxlength="50" required
+                     value="{{ old('name', $user->name) }}"
+                     class="input-field w-full px-4 py-3 rounded-lg"
+                     oninput="formatName(this)"
+                     pattern="^[А-ЯЁA-Z][а-яёa-z\-]+$"
+                     title="Имя должно начинаться с заглавной буквы">
+              @error('name')
+                  <span class="text-red-400 text-sm">{{ $message }}</span>
+              @enderror
           </div>
           
           <div>
-            <label for="surname" class="block text-sm font-medium mb-2">Фамилия</label>
-            <input type="text" name="surname" id="surname" maxlength="50"
-                   value="{{ old('surname', $user->surname) }}"
-                   class="input-field w-full px-4 py-3 rounded-lg">
-            @error('surname')
-              <span class="text-red-400 text-sm">{{ $message }}</span>
-            @enderror
+              <label for="surname" class="block text-sm font-medium mb-2">Фамилия</label>
+              <input type="text" name="surname" id="surname" maxlength="50"
+                     value="{{ old('surname', $user->surname) }}"
+                     class="input-field w-full px-4 py-3 rounded-lg"
+                     oninput="formatName(this)"
+                     pattern="^[А-ЯЁA-Z][а-яёa-z\-]+$"
+                     title="Фамилия должна начинаться с заглавной буквы">
+              @error('surname')
+                  <span class="text-red-400 text-sm">{{ $message }}</span>
+              @enderror
           </div>
           
           <div>
-            <label for="phone" class="block text-sm font-medium mb-2">Телефон*</label>
-            <input type="text" name="phone" id="phone" maxlength="15" required
-                   value="{{ old('phone', $user->phone) }}"
-                   class="input-field w-full px-4 py-3 rounded-lg"
-                   placeholder="8 999 999 99 99">
-            @error('phone')
-              <span class="text-red-400 text-sm">{{ $message }}</span>
-            @enderror
+              <label for="phone" class="block text-sm font-medium mb-2">Телефон*</label>
+              <input type="text" name="phone" id="phone" maxlength="15" required
+                     value="{{ old('phone', $user->phone) }}"
+                     class="input-field w-full px-4 py-3 rounded-lg"
+                     placeholder="8 999 999 99 99">
+              @error('phone')
+                  <span class="text-red-400 text-sm">{{ $message }}</span>
+              @enderror
           </div>
           
           <div>
-            <label for="password" class="block text-sm font-medium mb-2">Новый пароль</label>
-            <input type="password" name="password" id="password"
-                   class="input-field w-full px-4 py-3 rounded-lg"
-                   placeholder="Оставьте пустым, если не хотите менять">
-            @error('password')
-              <span class="text-red-400 text-sm">{{ $message }}</span>
-            @enderror
+              <label for="password" class="block text-sm font-medium mb-2">Новый пароль</label>
+              <input type="password" name="password" id="password"
+                     class="input-field w-full px-4 py-3 rounded-lg"
+                     placeholder="Оставьте пустым, если не хотите менять"
+                     minlength="8">
+              @error('password')
+                  <span class="text-red-400 text-sm">{{ $message }}</span>
+              @enderror
           </div>
           
           <div class="md:col-span-2 flex justify-center mt-4">
-            <button type="submit" 
-                    class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg px-8 py-3 shadow-md transition-all duration-300">
-              Сохранить изменения
-            </button>
+              <button type="submit" 
+                      class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg px-8 py-3 shadow-md transition-all duration-300">
+                  Сохранить изменения
+              </button>
           </div>
-        </form>
+      </form>
       </div>
 
       <!-- Блок с email -->
@@ -191,7 +198,7 @@
           @if(!$user->yandex_id)
             <button id="emailModalBtn" 
                     class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg px-6 py-2 shadow-md transition-all duration-300">
-              {{ $user->email ? 'Изменить email' : 'Добавить email' }}
+              {{ $user->email ? 'Подтвердить/Изменить' : 'Добавить email' }}
             </button>
           @endif
         </div>
@@ -549,6 +556,50 @@
         }
       }
     });
-  </script>
+    // Добавьте эти функции в тег <script>
+function formatName(input) {
+    // Удаляем все кроме букв, пробелов и дефисов
+    input.value = input.value.replace(/[^a-zA-Zа-яА-ЯёЁ\s-]/g, '');
+    
+    // Делаем первую букву заглавной, остальные - строчными
+    if (input.value.length > 0) {
+        input.value = input.value.split(/\s+/).map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+    }
+}
+
+function validateProfileForm() {
+    const nameInput = document.getElementById('name');
+    const surnameInput = document.getElementById('surname');
+    const phoneInput = document.getElementById('phone');
+    const phonePattern = /^8 \d{3} \d{3} \d{2} \d{2}$/;
+    const namePattern = /^[А-ЯЁA-Z][а-яёa-z\-]+$/u;
+
+    // Валидация имени
+    if (!namePattern.test(nameInput.value)) {
+        alert('Имя должно начинаться с заглавной буквы и содержать только буквы и дефисы');
+        nameInput.focus();
+        return false;
+    }
+
+    // Валидация фамилии (если заполнена)
+    if (surnameInput.value && !namePattern.test(surnameInput.value)) {
+        alert('Фамилия должна начинаться с заглавной буквы и содержать только буквы и дефисы');
+        surnameInput.focus();
+        return false;
+    }
+
+    // Валидация телефона
+    if (!phonePattern.test(phoneInput.value)) {
+        alert('Номер телефона должен быть в формате 8 999 999 99 99');
+        phoneInput.focus();
+        return false;
+    }
+
+    return true;
+}
+
+</script>
 </body>
 </html>
