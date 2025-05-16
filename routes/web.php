@@ -26,22 +26,23 @@ Route::get('/', [SpecialistController::class, 'index'])->name('home');
 Route::get('/services', [ServiceShowController::class, 'index'])->name('showservice');
 Route::get('/services/{service}', [ServiceShowController::class, 'show'])->name('services.show');
 Route::get('/all-specialists', [SpecialistController::class, 'all'])->name('all.specialists');
- Route::get('/services/{service}/appointments2', function(Service $service) {
-        $branchId = request()->input('branch_id');
-        
-        $appointments = Appointment::with(['staff'])
-            ->where('service_id', $service->id)
-            ->when($branchId, function($query) use ($branchId) {
-                $query->whereHas('staff', function($q) use ($branchId) {
-                    $q->where('branch_id', $branchId);
-                });
-            })
-            ->where('appointment_time', '>=', now())
-            ->orderBy('appointment_time')
-            ->get();
-        
-        return response()->json($appointments);
-    });
+Route::get('/services/{service}/appointments2', function(Service $service) {
+    $branchId = request()->input('branch_id');
+    
+    $appointments = Appointment::with(['staff'])
+        ->where('service_id', $service->id)
+        ->where('status', '!=', 'cancelled') // <-- Исключаем отменённые
+        ->when($branchId, function($query) use ($branchId) {
+            $query->whereHas('staff', function($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            });
+        })
+        ->where('appointment_time', '>=', now())
+        ->orderBy('appointment_time')
+        ->get();
+    
+    return response()->json($appointments);
+});
 
     Route::get('/branches/{branch}/schedule', function(Branch $branch) {
         return response()->json([

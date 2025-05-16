@@ -177,7 +177,7 @@
               <label class="block text-sm text-gray-400 mb-1">Филиал</label>
               <select name="branch_id" id="branch_id" 
                       class="w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      onchange="updateStaffList()" required>
+                      required>
                 <option value="" disabled selected>Выберите филиал</option>
                 @foreach($branches as $branch)
                   <option value="{{ $branch->id }}">{{ $branch->address }}</option>
@@ -286,236 +286,239 @@
   </div>
 
   <script>
-    const branchDataCache = {};
-
-    // Функции для модального окна изображения
-    function openModal(img) {
-      const modal = document.getElementById("imageModal");
-      const modalImg = document.getElementById("expandedImg");
-      modal.style.display = "flex";
-      modalImg.src = img.src;
-    }
-
-    document.querySelector('.close').addEventListener('click', function() {
-      document.getElementById('imageModal').style.display = "none";
-    });
-
-    window.addEventListener('click', function(event) {
-      if (event.target === document.getElementById('imageModal')) {
-        document.getElementById('imageModal').style.display = "none";
-      }
-    });
-
-    async function updateStaffList() {
-        const branchId = document.getElementById('branch_id').value;
+    document.addEventListener('DOMContentLoaded', function () {
+        const branchSelect = document.getElementById('branch_id');
         const staffSelect = document.getElementById('staff_id');
+        const timeInput = document.getElementById('appointment_time');
         const schedulePlaceholder = document.getElementById('schedule-placeholder');
         const branchSchedule = document.getElementById('branch-schedule');
-        
-        if (!branchId) {
-            staffSelect.disabled = true;
-            staffSelect.innerHTML = '<option value="" disabled selected>Сначала выберите филиал</option>';
-            schedulePlaceholder.classList.remove('hidden');
-            branchSchedule.classList.add('hidden');
-            return;
+        const appointmentsTableBody = document.querySelector('#appointments-table tbody');
+    
+        let branchScheduleData = {};
+        let staffListCache = {};
+    
+        // Форматирование даты для datetime-local
+        function formatForInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
-        
-        staffSelect.disabled = true;
-        staffSelect.innerHTML = '<option value="" disabled selected><span class="loading"></span> Загрузка...</option>';
-        
-        try {
-            if (!branchDataCache[branchId]) {
-                const [staffResponse, scheduleResponse] = await Promise.all([
-                    fetch(`/branches/${branchId}/staff?service_id={{ $service->id }}`),
-                    fetch(`/branches/${branchId}/schedule`)
-                ]);
-                
-                if (!staffResponse.ok || !scheduleResponse.ok) throw new Error();
-                
-                const [staffData, scheduleData] = await Promise.all([
-                    staffResponse.json(),
-                    scheduleResponse.json()
-                ]);
-                
-                branchDataCache[branchId] = { staff: staffData, schedule: scheduleData };
+    
+        // Получаем график работы филиала
+        async function fetchBranchSchedule(branchId) {
+            try {
+                const response = await fetch(`/branches/${branchId}/schedule`);
+                if (!response.ok) throw new Error('Ошибка загрузки расписания');
+                return await response.json();
+            } catch (error) {
+                console.error(error);
+                return null;
             }
-            
-            const { staff, schedule } = branchDataCache[branchId];
-            
-            // Обновляем список специалистов
+        }
+    
+        // Обновляем min/max значения инпута времени
+        async function updateDateTimeConstraints() {
+            const branchId = branchSelect.value;
+            if (!branchId) return;
+    
+            const schedule = await fetchBranchSchedule(branchId);
+            if (!schedule) return;
+    
+            branchScheduleData = schedule;
+    
+            const now = new Date();
+            const minTime = new Date(now.getTime() + 60 * 60 * 1000); // через 1 час
+            const maxTime = new Date(now);
+            maxTime.setDate(maxTime.getDate() + 30); // до 30 дней
+    
+            timeInput.min = formatForInput(minTime);
+            timeInput.max = formatForInput(maxTime);
+    
+            timeInput.addEventListener('change', function () {
+                const selectedDate = new Date(this.value);
+                const day = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    
+                const openTime = schedule[`${day}_open`];
+                const closeTime = schedule[`${day}_close`];
+    
+                this.setCustomValidity(""); // <-- очистка ошибки
+    
+                if (!openTime || !closeTime) {
+                    this.setCustomValidity("Филиал не работает в этот день");
+                    return;
+                }
+    
+                const [openHour, openMinute] = openTime.split(':');
+                const [closeHour, closeMinute] = closeTime.split(':');
+    
+                const selectedTime = selectedDate.getHours() * 60 + selectedDate.getMinutes();
+                const open = parseInt(openHour) * 60 + parseInt(openMinute);
+                const close = parseInt(closeHour) * 60 + parseInt(closeMinute);
+    
+                if (selectedTime < open || selectedTime > close) {
+                    this.setCustomValidity(`Время должно быть между ${openTime} и ${closeTime}`);
+                }
+            });
+        }
+    
+        // Загрузка специалистов
+        async function loadStaffList(branchId) {
+            staffSelect.disabled = true;
+            staffSelect.innerHTML = '<option value="" disabled selected><span class="loading"></span> Загрузка...</option>';
+    
+            if (!branchId) {
+                staffSelect.innerHTML = '<option value="" disabled selected>Сначала выберите филиал</option>';
+                return;
+            }
+    
+            if (staffListCache[branchId]) {
+                renderStaffOptions(staffListCache[branchId]);
+                return;
+            }
+    
+            try {
+                const response = await fetch(`/branches/${branchId}/staff?service_id={{ $service->id }}`);
+                if (!response.ok) throw new Error('Ошибка загрузки специалистов');
+    
+                const staffList = await response.json();
+                staffListCache[branchId] = staffList;
+                renderStaffOptions(staffList);
+            } catch (error) {
+                staffSelect.innerHTML = '<option value="" disabled>Ошибка загрузки</option>';
+                console.error(error);
+            }
+        }
+    
+        function renderStaffOptions(staffList) {
             staffSelect.innerHTML = '<option value="" disabled selected>Выберите специалиста</option>';
-            
-            if (staff?.length > 0) {
-                staff.forEach(s => {
-                    const option = document.createElement('option');
-                    option.value = s.id;
-                    option.textContent = `${s.first_name} ${s.last_name}`;
-                    staffSelect.appendChild(option);
-                });
-                staffSelect.disabled = false;
-            } else {
-                staffSelect.innerHTML += '<option value="" disabled>Нет специалистов</option>';
+            if (staffList.length === 0) {
+                staffSelect.innerHTML += '<option value="" disabled>Нет доступных специалистов</option>';
+                staffSelect.disabled = true;
+                return;
             }
-            
-            // Отображаем расписание
+    
+            staffList.forEach(staff => {
+                const option = document.createElement('option');
+                option.value = staff.id;
+                option.textContent = `${staff.first_name} ${staff.last_name}`;
+                staffSelect.appendChild(option);
+            });
+    
+            staffSelect.disabled = false;
+        }
+    
+        // Отображение графика работы филиала
+        function displayBranchSchedule(schedule) {
             branchSchedule.innerHTML = '';
-            
             const days = [
-                {name: 'Пн', openKey: 'monday_open', closeKey: 'monday_close'},
-                {name: 'Вт', openKey: 'tuesday_open', closeKey: 'tuesday_close'},
-                {name: 'Ср', openKey: 'wednesday_open', closeKey: 'wednesday_close'},
-                {name: 'Чт', openKey: 'thursday_open', closeKey: 'thursday_close'},
-                {name: 'Пт', openKey: 'friday_open', closeKey: 'friday_close'},
-                {name: 'Сб', openKey: 'saturday_open', closeKey: 'saturday_close'},
-                {name: 'Вс', openKey: 'sunday_open', closeKey: 'sunday_close'}
+                { name: 'Пн', openKey: 'monday_open', closeKey: 'monday_close' },
+                { name: 'Вт', openKey: 'tuesday_open', closeKey: 'tuesday_close' },
+                { name: 'Ср', openKey: 'wednesday_open', closeKey: 'wednesday_close' },
+                { name: 'Чт', openKey: 'thursday_open', closeKey: 'thursday_close' },
+                { name: 'Пт', openKey: 'friday_open', closeKey: 'friday_close' },
+                { name: 'Сб', openKey: 'saturday_open', closeKey: 'saturday_close' },
+                { name: 'Вс', openKey: 'sunday_open', closeKey: 'sunday_close' }
             ];
-            
+    
             days.forEach(day => {
                 const openTime = schedule[day.openKey];
                 const closeTime = schedule[day.closeKey];
-                
                 const dayCard = document.createElement('div');
                 dayCard.className = 'day-card bg-white/10 p-3 rounded-lg text-center';
-                
                 const dayTitle = document.createElement('h3');
                 dayTitle.className = 'font-semibold mb-1';
                 dayTitle.textContent = day.name;
-                
+    
                 const scheduleInfo = document.createElement('p');
                 scheduleInfo.className = 'text-sm';
-                
+    
                 if (openTime && closeTime && openTime !== 'null' && closeTime !== 'null') {
-                    scheduleInfo.textContent = `${formatTime(openTime)}-${formatTime(closeTime)}`;
+                    scheduleInfo.textContent = `${formatTime(openTime)}–${formatTime(closeTime)}`;
                     scheduleInfo.classList.add('text-green-400');
                 } else {
                     scheduleInfo.textContent = 'Выходной';
                     scheduleInfo.classList.add('text-red-400');
                 }
-                
+    
                 dayCard.appendChild(dayTitle);
                 dayCard.appendChild(scheduleInfo);
                 branchSchedule.appendChild(dayCard);
             });
-            
+    
             schedulePlaceholder.classList.add('hidden');
             branchSchedule.classList.remove('hidden');
-            await loadBranchAppointments(branchId);
-            
-        } catch (error) {
-            console.error('Error:', error);
-            staffSelect.innerHTML = '<option value="" disabled selected>Ошибка загрузки</option>';
         }
-    }
-
-    async function loadBranchAppointments(branchId) {
-        try {
-            const response = await fetch(`/services/{{ $service->id }}/appointments2?branch_id=${branchId}`);
-            if (!response.ok) throw new Error();
-            
-            const appointments = await response.json();
-            updateAppointmentsTable(appointments);
-        } catch (error) {
-            console.error('Error loading appointments:', error);
+    
+        // Загрузка записей филиала
+        async function loadBranchAppointments(branchId) {
+            try {
+                const response = await fetch(`/services/{{ $service->id }}/appointments2?branch_id=${branchId}`);
+                if (!response.ok) throw new Error('Ошибка загрузки записей');
+                const appointments = await response.json();
+                updateAppointmentsTable(appointments);
+            } catch (error) {
+                console.error('Ошибка загрузки записей:', error);
+            }
         }
-    }
-
-    function updateAppointmentsTable(appointments) {
-        const tableBody = document.querySelector('#appointments-table tbody');
-        tableBody.innerHTML = '';
-        
-        if (appointments.length === 0) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="2" class="text-center text-gray-400 py-4">
-                        Нет активных записей
-                    </td>
-                </tr>
-            `;
-            return;
+    
+        function updateAppointmentsTable(appointments) {
+            appointmentsTableBody.innerHTML = '';
+            if (appointments.length === 0) {
+                appointmentsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="2" class="text-center text-gray-400 py-4">
+                            Нет активных записей
+                        </td>
+                    </tr>`;
+                return;
+            }
+    
+            appointments.forEach(appointment => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-white/10 hover:bg-white/5';
+                row.innerHTML = `
+                    <td>${appointment.appointment_time}</td>
+                    <td>${appointment.staff?.first_name} ${appointment.staff?.last_name}</td>`;
+                appointmentsTableBody.appendChild(row);
+            });
         }
-        
-        appointments.forEach(appointment => {
-            const row = document.createElement('tr');
-            row.className = 'border-b border-white/10 hover:bg-white/5';
-            row.innerHTML = `
-                <td>${appointment.appointment_time}</td>
-                <td>${appointment.staff.first_name} ${appointment.staff.last_name}</td>
-            `;
-            tableBody.appendChild(row);
+    
+        // Форматирование времени
+        function formatTime(timeString) {
+            return timeString ? timeString.substring(0, 5) : timeString;
+        }
+    
+        // Слушатель изменения филиала
+        branchSelect.addEventListener('change', async function () {
+            const branchId = this.value;
+            if (!branchId) return;
+    
+            await loadStaffList(branchId);
+            const schedule = await fetchBranchSchedule(branchId);
+            if (schedule) {
+                displayBranchSchedule(schedule);
+                loadBranchAppointments(branchId);
+            }
+            updateDateTimeConstraints();
         });
-    }
-
-    function formatTime(timeString) {
-        return timeString?.substring(0, 5) || timeString;
-    }
     
-    document.addEventListener('DOMContentLoaded', function() {
-    const timeInput = document.getElementById('appointment_time');
-    const now = new Date();
-    const maxDate = new Date();
+        // При загрузке страницы
+        @if(old('branch_id'))
+        setTimeout(() => {
+            branchSelect.value = '{{ old('branch_id') }}';
+            const event = new Event('change');
+            branchSelect.dispatchEvent(event);
+        }, 100);
+        @endif
     
-    // Устанавливаем минимальное время (текущее время + 1 час)
-    now.setHours(now.getHours() + 1);
-    
-    // Устанавливаем максимальное время (30 дней вперед)
-    maxDate.setDate(maxDate.getDate() + 30);
-    maxDate.setHours(23, 50, 0);
-    
-    // Функция округления до 10 минут
-    const roundTo10Minutes = (date) => {
-        const minutes = date.getMinutes();
-        // Округляем до ближайших 10 минут
-        const roundedMinutes = Math.round(minutes / 10) * 10;
-        // Если получилось 60 минут, переходим на следующий час
-        if (roundedMinutes === 60) {
-            date.setHours(date.getHours() + 1);
-            date.setMinutes(0);
-        } else {
-            date.setMinutes(roundedMinutes);
-        }
-        date.setSeconds(0);
-        date.setMilliseconds(0);
-        return date;
-    };
-    
-    // Форматирование для datetime-local
-    const formatForInput = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
-    
-    // Устанавливаем минимальное и максимальное время
-    timeInput.min = formatForInput(now);
-    timeInput.max = formatForInput(maxDate);
-    
-    // При изменении значения
-    timeInput.addEventListener('change', function() {
-        if (!this.value) return;
-        
-        const selectedDate = new Date(this.value);
-        const roundedDate = roundTo10Minutes(new Date(selectedDate));
-        
-        // Обновляем значение, если нужно округлить
-        if (selectedDate.getTime() !== roundedDate.getTime()) {
-            this.value = formatForInput(roundedDate);
-        }
+        // Округляем старое значение времени
+        @if(old('appointment_time'))
+        timeInput.value = '{{ old('appointment_time') }}';
+        @endif
     });
-    
-    @if(old('appointment_time'))
-        // Округляем старое значение при загрузке
-        const oldTime = new Date('{{ old('appointment_time') }}');
-        document.getElementById('appointment_time').value = formatForInput(roundTo10Minutes(oldTime));
-    @endif
-    
-    @if(old('branch_id'))
-        document.getElementById('branch_id').value = '{{ old('branch_id') }}';
-        updateStaffList();
-    @endif
-});
-  </script>
+    </script>
 </body>
 </html>

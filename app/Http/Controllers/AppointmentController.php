@@ -256,12 +256,10 @@ class AppointmentController extends Controller
     {
         $conflictingAppointments = Appointment::where('staff_id', $staff->id)
             ->where(function($query) use ($startTime, $endTime) {
-                $query->where(function($q) use ($startTime, $endTime) {
-                    $q->where('appointment_time', '<', $endTime)
+                $query->where('appointment_time', '<', $endTime)
                       ->whereRaw("DATE_ADD(appointment_time, INTERVAL (SELECT duration FROM services WHERE id = service_id) MINUTE) > ?", [$startTime]);
-                });
             })
-            ->whereIn('status', ['active', 'confirmed'])
+            ->where('status', '!=', 'cancelled') // <-- Исключаем отменённые записи
             ->exists();
     
         if ($conflictingAppointments) {
@@ -269,24 +267,21 @@ class AppointmentController extends Controller
         }
     }
 
-    /**
-     * Проверка что у пользователя нет других записей на это время
-     */
-    protected function validateUserAppointments(int $userId, Carbon $startTime, Carbon $endTime): void
-    {
-        $conflictingAppointments = Appointment::where('user_id', $userId)
-            ->where(function($query) use ($startTime, $endTime) {
-                $query->where(function($q) use ($startTime, $endTime) {
-                    $q->where('appointment_time', '<', $endTime)
-                      ->whereRaw("DATE_ADD(appointment_time, INTERVAL (SELECT duration FROM services WHERE id = service_id) MINUTE) > ?", [$startTime]);
-                });
-            })
-            ->exists();
     
-        if ($conflictingAppointments) {
-            throw new \Exception('У вас уже есть запись на это время');
+        protected function validateUserAppointments(int $userId, Carbon $startTime, Carbon $endTime): void
+        {
+            $conflictingAppointments = Appointment::where('user_id', $userId)
+                ->where(function($query) use ($startTime, $endTime) {
+                    $query->where('appointment_time', '<', $endTime)
+                        ->whereRaw("DATE_ADD(appointment_time, INTERVAL (SELECT duration FROM services WHERE id = service_id) MINUTE) > ?", [$startTime]);
+                })
+                ->where('status', '!=', 'cancelled') // <-- Исключаем отменённые записи
+                ->exists();
+
+            if ($conflictingAppointments) {
+                throw new \Exception('У вас уже есть запись на это время');
+            }
         }
-    }
 
     public function cancel(Appointment $appointment)
     {

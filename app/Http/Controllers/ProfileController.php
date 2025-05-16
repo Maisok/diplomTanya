@@ -43,9 +43,9 @@ class ProfileController extends Controller
         $messages = [
             'name.required' => 'Поле "Имя" обязательно для заполнения',
             'name.max' => 'Имя не должно превышать 50 символов',
-            'name.regex' => 'Имя должно начинаться с заглавной буквы и содержать только буквы и дефисы',
+            'name.regex' => 'Имя должно содержать только буквы',
             'surname.max' => 'Фамилия не должна превышать 50 символов',
-            'surname.regex' => 'Фамилия должна начинаться с заглавной буквы и содержать только буквы и дефисы',
+            'surname.regex' => 'Фамилия должна содержать только буквы',
             'phone.required' => 'Поле "Телефон" обязательно для заполнения',
             'phone.regex' => 'Телефон должен быть в формате: 8 999 123 45 67',
             'phone.unique' => 'Этот номер телефона уже используется',
@@ -57,27 +57,39 @@ class ProfileController extends Controller
                 'required',
                 'string',
                 'max:50',
-                'regex:/^[А-ЯЁA-Z][а-яёa-z\-]+$/u'
+                'regex:/^[a-zA-Zа-яА-ЯёЁ\s\-]+$/u'
             ],
             'surname' => [
                 'nullable',
                 'string',
                 'max:50',
-                'regex:/^[А-ЯЁA-Z][а-яёa-z\-]+$/u'
+                'regex:/^[a-zA-Zа-яА-ЯёЁ\s\-]+$/u'
             ],
-            'phone' => [
-                'required',
-                'string',
-                'max:15',
-                Rule::unique('users', 'phone')->ignore($user->id),
-                'regex:/^8 \d{3} \d{3} \d{2} \d{2}$/'
-            ],
+           'phone' => [
+    'required',
+    'string',
+    'max:15',
+    'regex:/^8 \d{3} \d{3} \d{2} \d{2}$/', // Формат ввода: 8 999 123 45 67
+    function ($attribute, $value, $fail) use ($user) {
+        $normalized = $this->normalizePhone($value);
+
+        $exists = \App\Models\User::where('id', '!=', $user->id)
+            ->whereRaw("REGEXP_REPLACE(phone, '[^0-9]', '') = ?", [
+                preg_replace('/[^0-9]/', '', $normalized)
+            ])
+            ->exists();
+
+        if ($exists) {
+            $fail('Этот телефон уже используется.');
+        }
+    },
+],
             'password' => 'nullable|string|min:8',
         ], $messages);
     
-        $user->name = $request->name;
-        $user->surname = $request->surname;
-        $user->phone = $request->phone;
+        $user->name = $this->formatName($request->name);
+        $user->surname = $this->formatName($request->surname);
+        $user->phone = $this->normalizePhone($request->phone);
     
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
@@ -156,4 +168,31 @@ class ProfileController extends Controller
         return redirect()->route('profile.show')
             ->with('success', 'Email успешно подтвержден и обновлен');
     }
+
+
+    protected function normalizePhone($phone)
+    {
+        // Удаляем все нецифровые символы
+        $digits = preg_replace('/\D/', '', $phone);
+        
+        // Если номер начинается с 8 и имеет длину 11 цифр (российский номер)
+        if (strlen($digits) === 11 && $digits[0] === '8') {
+            return '+7' . substr($digits, 1);
+        }
+        
+        // Если номер начинается с +7 и имеет длину 12 цифр
+        if (strlen($digits) === 12 && strpos($phone, '+7') === 0) {
+            return '+' . $digits;
+        }
+        
+        // Для других форматов просто добавляем + в начало
+        return $digits ? '+' . $digits : null;
+    }
+
+    
+protected function formatName($name)
+{
+    return mb_convert_case(trim($name), MB_CASE_TITLE, 'UTF-8');
+}
+
 }
