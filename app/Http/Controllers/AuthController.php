@@ -128,7 +128,13 @@ protected function formatName($name)
                 'regex:/^8 \d{3} \d{3} \d{2} \d{2}$/',
                 function ($attribute, $value, $fail) {
                     $normalizedPhone = $this->normalizePhone($value);
-                    if (User::where('phone', $normalizedPhone)->exists()) {
+                    $phoneDigits = preg_replace('/[^0-9]/', '', $normalizedPhone);
+                
+                    $existsInUsers = \App\Models\User::whereRaw("REGEXP_REPLACE(phone, '[^0-9]', '') = ?", [$phoneDigits])->exists();
+                
+                    $existsInStaff = \App\Models\Staff::whereRaw("REGEXP_REPLACE(phone, '[^0-9]', '') = ?", [$phoneDigits])->exists();
+                
+                    if ($existsInUsers || $existsInStaff) {
                         $fail('Этот номер телефона уже зарегистрирован.');
                     }
                 },

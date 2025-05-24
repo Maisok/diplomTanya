@@ -72,14 +72,17 @@ class ProfileController extends Controller
     'regex:/^8 \d{3} \d{3} \d{2} \d{2}$/', // Формат ввода: 8 999 123 45 67
     function ($attribute, $value, $fail) use ($user) {
         $normalized = $this->normalizePhone($value);
-
-        $exists = \App\Models\User::where('id', '!=', $user->id)
-            ->whereRaw("REGEXP_REPLACE(phone, '[^0-9]', '') = ?", [
-                preg_replace('/[^0-9]/', '', $normalized)
-            ])
+    
+        $phoneDigits = preg_replace('/[^0-9]/', '', $normalized);
+    
+        $existsInUsers = \App\Models\User::where('id', '!=', $user->id)
+            ->whereRaw("REGEXP_REPLACE(phone, '[^0-9]', '') = ?", [$phoneDigits])
             ->exists();
-
-        if ($exists) {
+    
+        $existsInStaff = \App\Models\Staff::whereRaw("REGEXP_REPLACE(phone, '[^0-9]', '') = ?", [$phoneDigits])
+            ->exists();
+    
+        if ($existsInUsers || $existsInStaff) {
             $fail('Этот телефон уже используется.');
         }
     },

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('surname', 50)->nullable(); 
             $table->string('phone', 15)->unique()->nullable(); 
             $table->string('password')->nullable(); 
+            $table->enum('role', ['user', 'admin', 'super_admin'])->default('user');
             $table->timestamps();
             $table->string('email', 100)->nullable()->unique(); 
         });

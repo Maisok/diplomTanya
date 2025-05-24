@@ -21,6 +21,15 @@ use App\Models\Service;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admins', [AdminController::class, 'index'])->name('admins.index');
+    Route::get('/admins/create', [AdminController::class, 'create'])->name('admins.create');
+    Route::post('/admins', [AdminController::class, 'store'])->name('admins.store');
+    Route::get('/admins/{user}/edit', [AdminController::class, 'edit'])->name('admins.edit');
+    Route::put('/admins/{user}', [AdminController::class, 'update'])->name('admins.update');
+    Route::delete('/admins/{user}', [AdminController::class, 'destroy'])->name('admins.destroy');
+});
+
 // Главная и публичные маршруты
 Route::get('/', [SpecialistController::class, 'index'])->name('home');
 Route::get('/services', [ServiceShowController::class, 'index'])->name('showservice');
@@ -125,7 +134,7 @@ Route::prefix('staff')->group(function () {
 // Админ-панель
 Route::prefix('admin')->middleware(['auth', PreventConcurrentLogins::class.':web'])->group(function () {
 
-    Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::get('/', [AdminController::class, 'index_main'])->name('admin.dashboard');
     Route::get('/export/active-appointments', [ExportController::class, 'exportActiveAppointments'])->name('export.active-appointments');
     Route::get('/export/completed-appointments', [ExportController::class, 'exportCompletedAppointments'])->name('export.completed-appointments');
     // Управление персоналом
