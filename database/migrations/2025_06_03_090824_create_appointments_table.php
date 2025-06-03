@@ -16,10 +16,17 @@ return new class extends Migration
             $table->dateTime('appointment_time');
             $table->enum('status', ['active', 'completed', 'cancelled'])->default('active');
             $table->timestamps();
-    
+            $table->tinyInteger('rating')->nullable();
             $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('staff_id')->references('id')->on('staff')->onDelete('cascade'); // Связь с таблицей staff
+            $table->foreign('staff_id')->references('id')->on('users')->onDelete('cascade'); 
+            $table->unsignedBigInteger('branch_id');
+            
+            // Добавляем внешний ключ
+            $table->foreign('branch_id')
+                  ->references('id')
+                  ->on('branches')
+                  ->onDelete('cascade');
         });
     }
 

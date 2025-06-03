@@ -69,17 +69,21 @@
                 </h2>
                 <form method="GET" action="{{ route('admin.all-appointments') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <!-- Фильтр по персоналу -->
+                    @if(auth()->user()->role === 'admin')
                     <div>
                         <label for="staff_id" class="block text-gray-300 mb-2">Специалист</label>
                         <select name="staff_id" id="staff_id" class="w-full p-3 rounded-lg bg-[#3A556A] border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white">
                             <option value="">Все специалисты</option>
                             @foreach($staff as $employee)
                                 <option value="{{ $employee->id }}" {{ request('staff_id') == $employee->id ? 'selected' : '' }}>
-                                    {{ $employee->first_name }} {{ $employee->last_name }}
+                                    {{ $employee->name }} {{ $employee->surname }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
+                    @endif
+
+            
                     
                     <!-- Фильтр по услугам -->
                     <div>
@@ -119,7 +123,18 @@
                             </svg>
                             Сбросить
                         </a>
+                    
                     </div>
+                    @if(auth()->user()->role === 'staff')
+
+                    <a href='{{route('staff.exports.clients.index')}}' class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-lg transition-all duration-300 shadow-md flex-1 flex items-center justify-center text-sm md:text-base">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                        </svg>
+                        Экспорт историй клиентов
+                    </a>
+
+                @endif
                 </form>
             </div>
             
@@ -142,10 +157,10 @@
                             @forelse($appointments as $appointment)
                                 <tr class="table-row">
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $appointment->id }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ $appointment->user->name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ $appointment->user->name }} {{ $appointment->user->surname }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $appointment->service->name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        {{ $appointment->staff->first_name }} {{ $appointment->staff->last_name }}
+                                        {{ $appointment->staff->surname }} {{ $appointment->staff->name }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $appointment->appointment_time }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">

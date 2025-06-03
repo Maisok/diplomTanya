@@ -100,120 +100,109 @@
                 </div>
             @endif
             
-            <form action="{{ route('admin.staff.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6" onsubmit="return validateForm()">
+            <form action="{{ route('admin.staff.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6" id="staffForm">
                 @csrf
-                
+            
+                <!-- Имя -->
                 <div>
-                    <label for="last_name" class="block text-gray-300 mb-3 font-medium">Фамилия*</label>
-                    <input type="text" name="last_name" id="last_name" maxlength="50" required
-                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('last_name') input-error @enderror"
+                    <label for="name" class="block text-gray-300 mb-3 font-medium">Имя*</label>
+                    <input type="text" name="name" id="name" maxlength="50" required
+                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('name') input-error @enderror"
                            placeholder="Максимум 50 символов"
-                           value="{{ old('last_name') }}">
-                    @error('last_name')
+                           value="{{ old('name') }}">
+                    <p class="error-message hidden" id="nameError"></p>
+                    @error('name')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
-                    <p class="text-gray-400 text-xs mt-2">Максимум 50 символов</p>
                 </div>
-                
+            
+                <!-- Фамилия -->
                 <div>
-                    <label for="first_name" class="block text-gray-300 mb-3 font-medium">Имя*</label>
-                    <input type="text" name="first_name" id="first_name" maxlength="50" required
-                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('first_name') input-error @enderror"
-                           placeholder="Максимум 50 символов"
-                           value="{{ old('first_name') }}">
-                    @error('first_name')
+                    <label for="surname" class="block text-gray-300 mb-3 font-medium">Фамилия</label>
+                    <input type="text" name="surname" id="surname" maxlength="50"
+                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('surname') input-error @enderror"
+                           placeholder="Максимум 50 символов" required
+                           value="{{ old('surname') }}">
+                    <p class="error-message hidden" id="surnameError"></p>
+                    @error('surname')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
-                    <p class="text-gray-400 text-xs mt-2">Максимум 50 символов</p>
                 </div>
-
-                <div>
-                    <label for="middle_name" class="block text-gray-300 mb-3 font-medium">Отчество</label>
-                    <input type="text" name="middle_name" id="middle_name" maxlength="50"
-                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('middle_name') input-error @enderror"
-                           placeholder="Максимум 50 символов"
-                           value="{{ old('middle_name') }}">
-                    @error('middle_name')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                    <p class="text-gray-400 text-xs mt-2">Максимум 50 символов</p>
-                </div>
-
+            
+                <!-- Телефон -->
                 <div>
                     <label for="phone" class="block text-gray-300 mb-3 font-medium">Телефон*</label>
                     <input type="text" name="phone" id="phone" maxlength="15" required
                            class="w-full input-field p-3 rounded-lg focus:outline-none @error('phone') input-error @enderror"
                            placeholder="8 999 999 99 99"
                            value="{{ old('phone') }}">
+                    <p class="error-message hidden" id="phoneError"></p>
                     @error('phone')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
-                    <p class="text-gray-400 text-xs mt-2">Формат: 8 999 999 99 99</p>
                 </div>
 
                 <div>
-                    <label for="status">Статус</label>
-                    <select name="status" id="status" class="form-control">
-                        <option value="active" {{ old('status', $staff->status ?? '') == 'active' ? 'selected' : '' }}>Работает</option>
-                        <option value="inactive" {{ old('status', $staff->status ?? '') == 'inactive' ? 'selected' : '' }}>Не работает</option>
+                    <label for="branch_id" class="block text-sm font-medium text-gray-300 mb-2">Филиал</label>
+                    <select name="branch_id" id="branch_id" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none" required>
+                        @foreach($branches as $branch)
+                            <option value="{{ $branch->id }}">{{ $branch->address }}</option>
+                        @endforeach
                     </select>
                 </div>
-
+            
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-gray-300 mb-3 font-medium">Email</label>
+                    <input type="email" name="email" id="email" maxlength="100"
+                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('email') input-error @enderror"
+                           placeholder="example@example.com" required
+                           value="{{ old('email') }}">
+                    <p class="error-message hidden" id="emailError"></p>
+                    @error('email')
+                        <p class="error-message">{{ $message }}</p>
+                    @enderror
+                </div>
+            
+                <!-- Пароль -->
                 <div>
                     <label for="password" class="block text-gray-300 mb-3 font-medium">Пароль*</label>
                     <input type="password" name="password" id="password" required
                            class="w-full input-field p-3 rounded-lg focus:outline-none @error('password') input-error @enderror"
                            placeholder="Минимум 8 символов">
+                    <p class="error-message hidden" id="passwordError"></p>
                     @error('password')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
-                    <p class="text-gray-400 text-xs mt-2">Минимум 8 символов</p>
                 </div>
-
+            
+                <!-- Статус -->
+                <div>
+                    <label for="status" class="block text-gray-300 mb-3 font-medium">Статус</label>
+                    <select name="status" id="status" class="form-control w-full p-3 rounded-lg">
+                        <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Работает</option>
+                        <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Не работает</option>
+                    </select>
+                </div>
+            
+                <!-- Фото -->
                 <div>
                     <label for="image" class="block text-gray-300 mb-3 font-medium">Фото</label>
-                    <div class="file-upload relative rounded-lg p-6 text-center @error('image') input-error @enderror">
-                        <input type="file" name="image" id="image" 
-                               class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                               accept="image/jpeg,image/png,image/jpg,image/gif">
-                        <svg class="w-10 h-10 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                        </svg>
-                        <p class="mt-2 text-sm text-gray-400">Перетащите фото или нажмите для загрузки</p>
-                        <p class="mt-1 text-xs text-gray-500">Форматы: JPEG, PNG, JPG, GIF. Максимум 2MB</p>
-                    </div>
+                    <input type="file" name="image" id="image" required
+                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('image') input-error @enderror"
+                           accept="image/jpeg,image/png,image/jpg,image/gif">
+                    <p class="error-message hidden" id="imageError"></p>
                     @error('image')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
                 </div>
-
-                <div>
-                    <label for="branch_id" class="block text-gray-300 mb-3 font-medium">Филиал</label>
-                    <select name="branch_id" id="branch_id"
-                            class="w-full input-field p-3 rounded-lg focus:outline-none @error('branch_id') input-error @enderror">
-                        <option value="">-- Выберите филиал --</option>
-                        @foreach($branches as $branch)
-                            <option value="{{ $branch->id }}" @if(old('branch_id') == $branch->id) selected @endif>{{ $branch->address }}</option>
-                        @endforeach
-                    </select>
-                    @error('branch_id')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
-                    <a href="{{ route('admin.staff.index') }}" 
-                       class="btn-secondary text-white px-6 py-3 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
+            
+                <!-- Кнопки -->
+                <div class="flex justify-end space-x-4 pt-4">
+                    <a href="{{ route('admin.staff.index') }}" class="btn-secondary px-6 py-3 rounded-lg">
                         Отмена
                     </a>
-                    <button type="submit" 
-                            class="btn-primary text-white px-6 py-3 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
+                    <button type="submit" class="btn-primary px-6 py-3 rounded-lg">
                         Добавить
                     </button>
                 </div>
@@ -222,96 +211,171 @@
     </div>
 
     <script>
-        function capitalizeFirstLetter(string) {
-            return string.charAt(0).toUpperCase() + string.slice(1);
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('staffForm');
+            const nameInput = document.getElementById('name');
+            const surnameInput = document.getElementById('surname');
+            const phoneInput = document.getElementById('phone');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const imageInput = document.getElementById('image');
 
-        function validateForm() {
-            const lastName = document.getElementById('last_name').value;
-            const firstName = document.getElementById('first_name').value;
-            const middleName = document.getElementById('middle_name').value;
-            const phone = document.getElementById('phone').value;
-            const password = document.getElementById('password').value;
-
-            // Проверка фамилии
-            if (!/^[a-zA-Zа-яА-Я\s]+$/.test(lastName)) {
-                alert('Фамилия должна содержать только буквы и пробелы');
-                return false;
+            // Функция для форматирования имени (первая буква заглавная)
+            function formatName(name) {
+                return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
             }
 
-            // Проверка имени
-            if (!/^[a-zA-Zа-яА-Я\s]+$/.test(firstName)) {
-                alert('Имя должно содержать только буквы и пробелы');
-                return false;
-            }
+            // Валидация имени
+            nameInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^a-zA-Zа-яА-ЯёЁ\s\-]/g, '');
+                if (this.value.length > 50) {
+                    this.value = this.value.substring(0, 50);
+                }
+            });
 
-            // Проверка отчества
-            if (middleName && !/^[a-zA-Zа-яА-Я\s]*$/.test(middleName)) {
-                alert('Отчество должно содержать только буквы и пробелы');
-                return false;
-            }
+            // Валидация фамилии
+            surnameInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^a-zA-Zа-яА-ЯёЁ\s\-]/g, '');
+                if (this.value.length > 50) {
+                    this.value = this.value.substring(0, 50);
+                }
+            });
 
-            // Проверка телефона
-            if (!/^8 \d{3} \d{3} \d{2} \d{2}$/.test(phone)) {
-                alert('Телефон должен быть в формате: 8 999 999 99 99');
-                return false;
-            }
+            // Форматирование телефона (8 XXX XXX XX XX)
+            phoneInput.addEventListener('input', function(e) {
+                let phone = e.target.value.replace(/\D/g, '');
+                let formattedPhone = '';
 
-            // Проверка пароля
-            if (password.length < 8) {
-                alert('Пароль должен содержать минимум 8 символов');
-                return false;
-            }
+                if (phone.length > 0) {
+                    formattedPhone = '8 ';
+                }
+                if (phone.length > 1) {
+                    formattedPhone += phone.substring(1, 4) + ' ';
+                }
+                if (phone.length > 4) {
+                    formattedPhone += phone.substring(4, 7) + ' ';
+                }
+                if (phone.length > 7) {
+                    formattedPhone += phone.substring(7, 9) + ' ';
+                }
+                if (phone.length > 9) {
+                    formattedPhone += phone.substring(9, 11);
+                }
 
-            return true;
-        }
+                e.target.value = formattedPhone;
+            });
 
-        // Обработчики ввода
-        document.getElementById('last_name').addEventListener('input', function() {
-            this.value = this.value.replace(/[^a-zA-Zа-яА-Я\s]/g, '');
-            if (this.value.length > 50) {
-                this.value = this.value.substring(0, 50);
-            }
-            this.value = capitalizeFirstLetter(this.value);
-        });
+            // Валидация email
+            emailInput.addEventListener('blur', function() {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (this.value && !emailRegex.test(this.value)) {
+                    document.getElementById('emailError').textContent = 'Введите корректный email';
+                    document.getElementById('emailError').classList.remove('hidden');
+                    this.classList.add('input-error');
+                } else {
+                    document.getElementById('emailError').classList.add('hidden');
+                    this.classList.remove('input-error');
+                }
+            });
 
-        document.getElementById('first_name').addEventListener('input', function() {
-            this.value = this.value.replace(/[^a-zA-Zа-яА-Я\s]/g, '');
-            if (this.value.length > 50) {
-                this.value = this.value.substring(0, 50);
-            }
-            this.value = capitalizeFirstLetter(this.value);
-        });
+            // Валидация пароля
+            passwordInput.addEventListener('blur', function() {
+                if (this.value.length < 8) {
+                    document.getElementById('passwordError').textContent = 'Пароль должен содержать минимум 8 символов';
+                    document.getElementById('passwordError').classList.remove('hidden');
+                    this.classList.add('input-error');
+                } else {
+                    document.getElementById('passwordError').classList.add('hidden');
+                    this.classList.remove('input-error');
+                }
+            });
 
-        document.getElementById('middle_name').addEventListener('input', function() {
-            this.value = this.value.replace(/[^a-zA-Zа-яА-Я\s]/g, '');
-            if (this.value.length > 50) {
-                this.value = this.value.substring(0, 50);
-            }
-            this.value = capitalizeFirstLetter(this.value);
-        });
+            // Валидация изображения
+            imageInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+                    const maxSize = 2 * 1024 * 1024; // 2MB
 
-        document.getElementById('phone').addEventListener('input', function(e) {
-            let phone = e.target.value.replace(/\D/g, '');
-            let formattedPhone = '';
+                    if (!validTypes.includes(file.type)) {
+                        document.getElementById('imageError').textContent = 'Допустимые форматы: jpeg, png, jpg, gif';
+                        document.getElementById('imageError').classList.remove('hidden');
+                        this.classList.add('input-error');
+                        this.value = '';
+                    } else if (file.size > maxSize) {
+                        document.getElementById('imageError').textContent = 'Максимальный размер изображения 2MB';
+                        document.getElementById('imageError').classList.remove('hidden');
+                        this.classList.add('input-error');
+                        this.value = '';
+                    } else {
+                        document.getElementById('imageError').classList.add('hidden');
+                        this.classList.remove('input-error');
+                    }
+                }
+            });
 
-            if (phone.length > 0) {
-                formattedPhone = '8 ';
-            }
-            if (phone.length > 1) {
-                formattedPhone += phone.substring(1, 4) + ' ';
-            }
-            if (phone.length > 4) {
-                formattedPhone += phone.substring(4, 7) + ' ';
-            }
-            if (phone.length > 7) {
-                formattedPhone += phone.substring(7, 9) + ' ';
-            }
-            if (phone.length > 9) {
-                formattedPhone += phone.substring(9, 11);
-            }
+            // Валидация формы перед отправкой
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
 
-            e.target.value = formattedPhone;
+                // Проверка имени
+                if (!nameInput.value.trim()) {
+                    document.getElementById('nameError').textContent = 'Поле "Имя" обязательно для заполнения';
+                    document.getElementById('nameError').classList.remove('hidden');
+                    nameInput.classList.add('input-error');
+                    isValid = false;
+                } else if (nameInput.value.length > 50) {
+                    document.getElementById('nameError').textContent = 'Имя не должно превышать 50 символов';
+                    document.getElementById('nameError').classList.remove('hidden');
+                    nameInput.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    document.getElementById('nameError').classList.add('hidden');
+                    nameInput.classList.remove('input-error');
+                }
+
+                // Проверка телефона
+                const phoneRegex = /^8 \d{3} \d{3} \d{2} \d{2}$/;
+                if (!phoneInput.value.trim()) {
+                    document.getElementById('phoneError').textContent = 'Поле "Телефон" обязательно для заполнения';
+                    document.getElementById('phoneError').classList.remove('hidden');
+                    phoneInput.classList.add('input-error');
+                    isValid = false;
+                } else if (!phoneRegex.test(phoneInput.value)) {
+                    document.getElementById('phoneError').textContent = 'Телефон должен быть в формате: 8 999 999 99 99';
+                    document.getElementById('phoneError').classList.remove('hidden');
+                    phoneInput.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    document.getElementById('phoneError').classList.add('hidden');
+                    phoneInput.classList.remove('input-error');
+                }
+
+                // Проверка пароля
+                if (!passwordInput.value.trim()) {
+                    document.getElementById('passwordError').textContent = 'Поле "Пароль" обязательно для заполнения';
+                    document.getElementById('passwordError').classList.remove('hidden');
+                    passwordInput.classList.add('input-error');
+                    isValid = false;
+                } else if (passwordInput.value.length < 8) {
+                    document.getElementById('passwordError').textContent = 'Пароль должен содержать минимум 8 символов';
+                    document.getElementById('passwordError').classList.remove('hidden');
+                    passwordInput.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    document.getElementById('passwordError').classList.add('hidden');
+                    passwordInput.classList.remove('input-error');
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    // Прокрутка к первой ошибке
+                    const firstError = document.querySelector('.error-message:not(.hidden)');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
         });
     </script>
 </body>

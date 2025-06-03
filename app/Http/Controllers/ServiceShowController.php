@@ -32,36 +32,25 @@ class ServiceShowController extends Controller
     
         return view('services', compact('services', 'categories'));
     }
-
+    
     public function show(Service $service)
     {
-        // Получаем только активные филиалы, где есть сотрудники с этой услугой
-        $branches = Branch::where('status', 'active')
-            ->whereHas('staff.services', function($query) use ($service) {
-                $query->where('services.id', $service->id);
-            })
-            ->get(['id', 'address']);
+        // Получаем всех сотрудников по этой услуге
+        $staffList = $service->staff;
     
-        // Получаем branch_id из запроса
-        $branchId = request()->input('branch_id');
+        // Получаем филиалы этих сотрудников и фильтруем только active
+        $branches = $staffList
+            ->pluck('branch')               // Собираем все филиалы
+            ->filter(fn($branch) => $branch && $branch->status === 'active')  // Только активные
+            ->unique('id')                  // Уникальные филиалы
+            ->values();                     // Сбрасываем ключи
     
-        // Получаем записи только на будущее время и по выбранному филиалу (если указан)
-        $appointments = Appointment::with(['staff', 'user'])
-            ->where('service_id', $service->id)
-            ->when($branchId, function($query) use ($branchId) {
-                $query->whereHas('staff', function($q) use ($branchId) {
-                    $q->where('branch_id', $branchId);
-                });
-            })
+        // Получаем записи на приём (будущие)
+        $appointments = $service->appointments()
             ->where('appointment_time', '>=', now())
-            ->orderBy('appointment_time')
+            ->with(['staff'])
             ->get();
     
-        return view('cart', [
-            'service' => $service,
-            'branches' => $branches,
-            'appointments' => $appointments,
-            'selectedBranchId' => $branchId
-        ]);
+        return view('cart', compact('service', 'branches', 'appointments'));
     }
 }

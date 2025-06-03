@@ -356,159 +356,192 @@
 
       // Функция инициализации карты
       function initMap() {
-        try {
-          // Создаем карту
-          const map = new ymaps.Map('map', {
+    try {
+        const map = new ymaps.Map('map', {
             center: [55.76, 37.64],
             zoom: 10,
-            controls: []
-          });
+            controls: ['zoomControl']
+        });
 
-          // Массив для хранения промисов геокодирования
-          const geocodePromises = [];
+        const geocodePromises = [];
 
-          @foreach($branches as $branch)
-            geocodePromises.push(
-              ymaps.geocode('{{ $branch->address }}', { results: 1 })
-                .then(function(res) {
-                  const firstGeoObject = res.geoObjects.get(0);
-                  if (firstGeoObject) {
-                    const coordinates = firstGeoObject.geometry.getCoordinates();
-                    
-                    // Создаем кастомную метку
-                    const placemarkLayout = ymaps.templateLayoutFactory.createClass(
-                      '<div class="custom-placemark"></div>'
-                    );
-                    
-                    const placemark = new ymaps.Placemark(coordinates, {
-                      branchId: '{{ $branch->id }}',
-                      branchName: '{{ $branch->name ?? "Филиал" }}',
-                      branchAddress: '{{ $branch->address }}',
-                      branchImage: '{{ $branch->image ? asset("storage/" . $branch->image) : asset("img/default-branch.jpg") }}',
-                      mondayHours: '{{ $branch->monday_open }} - {{ $branch->monday_close }}',
-                      tuesdayHours: '{{ $branch->tuesday_open }} - {{ $branch->tuesday_close }}',
-                      wednesdayHours: '{{ $branch->wednesday_open }} - {{ $branch->wednesday_close }}',
-                      thursdayHours: '{{ $branch->thursday_open }} - {{ $branch->thursday_close }}',
-                      fridayHours: '{{ $branch->friday_open }} - {{ $branch->friday_close }}',
-                      saturdayHours: '{{ $branch->saturday_open ? $branch->saturday_open . " - " . $branch->saturday_close : "Выходной" }}',
-                      sundayHours: '{{ $branch->sunday_open ? $branch->sunday_open . " - " . $branch->sunday_close : "Выходной" }}',
-                    branchServices: `{!! 
-                        $branch->staff->flatMap(function($staff) {
-                            return $staff->services;
-                        })->unique('id')->map(function($service) {
-                            return "<li>• " . e($service->name) . "</li>";
-                        })->implode('') 
-                    !!}`
-                    }, {
-                      iconLayout: placemarkLayout,
-                      iconShape: {
-                        type: 'Circle',
-                        coordinates: [0, 0],
-                        radius: 30
-                      }
-                    });
+        @foreach($branches as $branch)
+            @php
+                // Формируем график для этого филиала
+                $schedule = [
+                    'monday' => 'Выходной',
+                    'tuesday' => 'Выходной',
+                    'wednesday' => 'Выходной',
+                    'thursday' => 'Выходной',
+                    'friday' => 'Выходной',
+                    'saturday' => 'Выходной',
+                    'sunday' => 'Выходной',
+                ];
 
-                    // Обработчик клика на метку
-                    placemark.events.add('click', function(e) {
-                      const target = e.get('target');
-                      const properties = target.properties.getAll();
-                      
-                      // Заполняем модальное окно данными
-                      modalContent.innerHTML = `
-                       <div class="branch-info">
-                        <img src="${properties.branchImage}" alt="Фото филиала" class="branch-image">
-                        
-                        <h3 class="text-2xl font-bold mb-2">${properties.branchName}</h3>
-                        <p class="text-gray-300 mb-4">${properties.branchAddress}</p>
-                        
-                        <div class="mb-6">
-                          <h4 class="font-semibold text-xl mb-2">Часы работы:</h4>
-                          <div class="schedule-list">
-                            <div class="schedule-item">
-                              <span class="schedule-day">Понедельник:</span>
-                              <span class="schedule-time">${formatHours(properties.mondayHours)}</span>
-                            </div>
-                            <div class="schedule-item">
-                              <span class="schedule-day">Вторник:</span>
-                              <span class="schedule-time">${formatHours(properties.tuesdayHours)}</span>
-                            </div>
-                            <div class="schedule-item">
-                              <span class="schedule-day">Среда:</span>
-                              <span class="schedule-time">${formatHours(properties.wednesdayHours)}</span>
-                            </div>
-                            <div class="schedule-item">
-                              <span class="schedule-day">Четверг:</span>
-                              <span class="schedule-time">${formatHours(properties.thursdayHours)}</span>
-                            </div>
-                            <div class="schedule-item">
-                              <span class="schedule-day">Пятница:</span>
-                              <span class="schedule-time">${formatHours(properties.fridayHours)}</span>
-                            </div>
-                            <div class="schedule-item">
-                              <span class="schedule-day">Суббота:</span>
-                              <span class="schedule-time">${formatHours(properties.saturdayHours)}</span>
-                            </div>
-                            <div class="schedule-item">
-                              <span class="schedule-day">Воскресенье:</span>
-                              <span class="schedule-time">${formatHours(properties.sundayHours)}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div class="mb-6">
-                          <h4 class="font-semibold text-xl mb-2">Услуги:</h4>
-                          <ul class="text-gray-300">
-                            ${properties.branchServices}
-                          </ul>
-                        </div>
-                      </div>
-                      `;
-                      
-                      // Показываем модальное окно и отключаем прокрутку фона
-                      modal.style.display = 'block';
-                      toggleBodyScroll(false);
-                    });
-
-                    map.geoObjects.add(placemark);
-                    
-                    // Для первого филиала центрируем карту
-                    if ('{{ $loop->first }}' === '1') {
-                      map.setCenter(coordinates, 12);
+                foreach ($branch->schedule as $record) {
+                    switch ($record->day_of_week) {
+                        case 1: $schedule['monday'] = "$record->open_time - $record->close_time"; break;
+                        case 2: $schedule['tuesday'] = "$record->open_time - $record->close_time"; break;
+                        case 3: $schedule['wednesday'] = "$record->open_time - $record->close_time"; break;
+                        case 4: $schedule['thursday'] = "$record->open_time - $record->close_time"; break;
+                        case 5: $schedule['friday'] = "$record->open_time - $record->close_time"; break;
+                        case 6: $schedule['saturday'] = "$record->open_time - $record->close_time"; break;
+                        case 0: $schedule['sunday'] = "$record->open_time - $record->close_time"; break;
                     }
-                  }
-                })
-                .catch(function(error) {
-                  console.error('Ошибка геокодирования адреса {{ $branch->address }}:', error);
-                })
-            );
-          @endforeach
+                }
 
-          // Ждем завершения всех геокодирований
-          Promise.all(geocodePromises)
-            .then(() => {
-              console.log('Все метки добавлены на карту');
-            })
-            .catch(error => {
-              console.error('Ошибка при добавлении меток:', error);
-            });
+                foreach ($schedule as $key => $value) {
+            if (!str_contains($value, 'Выходной')) {
+                list($open, $close) = explode(' - ', $value);
+                
+                // Форматируем время: убираем секунды
+                $formatTime = function($time) {
+                    return substr($time, 0, 5); // обрезаем до HH:MM
+                };
 
-          // Убираем ненужные элементы управления
-          map.controls.remove('geolocationControl');
-          map.controls.remove('searchControl');
-          map.controls.remove('trafficControl');
-          map.controls.remove('typeSelector');
-          map.controls.remove('fullscreenControl');
-          map.controls.remove('rulerControl');
-          
-          // Отключаем скролл зум
-          map.behaviors.disable(['scrollZoom']);
-
-        } catch (error) {
-          console.error('Ошибка инициализации карты:', error);
-          showMapError(error.message);
+                $schedule[$key] = $formatTime($open) . ' - ' . $formatTime($close);
+            }
         }
-      }
 
+                // Генерируем услуги
+                $servicesList = '';
+                if ($branch->users->isNotEmpty()) {
+                    $servicesList = $branch->users->flatMap(fn($staff) => $staff->services)
+                        ->unique('id')
+                        ->map(fn($service) => "<li>• $service->name</li>")
+                        ->implode('');
+                }
+            @endphp
+
+            geocodePromises.push(
+                ymaps.geocode('{{ $branch->address }}', { results: 1 })
+                    .then(function(res) {
+                        const firstGeoObject = res.geoObjects.get(0);
+                        if (firstGeoObject) {
+                            const coordinates = firstGeoObject.geometry.getCoordinates();
+
+                            const placemarkLayout = ymaps.templateLayoutFactory.createClass('<div class="custom-placemark"></div>');
+
+                            const placemark = new ymaps.Placemark(coordinates, {
+                                branchId: '{{ $branch->id }}',
+                                branchName: '{{ $branch->name ?? "Филиал" }}',
+                                branchAddress: '{{ $branch->address }}',
+                                branchImage: '{{ $branch->image ? asset("storage/".$branch->image) : asset("img/default-branch.jpg") }}',
+
+                                mondayHours: '{{ $schedule["monday"] }}',
+                                tuesdayHours: '{{ $schedule["tuesday"] }}',
+                                wednesdayHours: '{{ $schedule["wednesday"] }}',
+                                thursdayHours: '{{ $schedule["thursday"] }}',
+                                fridayHours: '{{ $schedule["friday"] }}',
+                                saturdayHours: '{{ $schedule["saturday"] }}',
+                                sundayHours: '{{ $schedule["sunday"] }}',
+
+                                branchServices: `<ul>{!! $servicesList !!}</ul>`
+                            }, {
+                                iconLayout: placemarkLayout,
+                                iconShape: {
+                                    type: 'Circle',
+                                    coordinates: [0, 0],
+                                    radius: 30
+                                }
+                            });
+
+                            // Обработчик клика — вывод данных из этой конкретной метки
+                            placemark.events.add('click', function(e) {
+                                const target = e.get('target');
+                                const properties = target.properties.getAll();
+
+                                modalContent.innerHTML = `
+                                    <div class="branch-info">
+                                        <img src="${properties.branchImage}" alt="Фото филиала" class="branch-image">
+                                        <h3 class="text-2xl font-bold mb-2">${properties.branchName}</h3>
+                                        <p class="text-gray-300 mb-4">${properties.branchAddress}</p>
+
+                                        <div class="mb-6">
+                                            <h4 class="font-semibold text-xl mb-2">Часы работы:</h4>
+                                            <div class="schedule-list">
+                                                <div class="schedule-item">
+                                                    <span class="schedule-day">Понедельник:</span>
+                                                    <span class="schedule-time">${formatHours(properties.mondayHours)}</span>
+                                                </div>
+                                                <div class="schedule-item">
+                                                    <span class="schedule-day">Вторник:</span>
+                                                    <span class="schedule-time">${formatHours(properties.tuesdayHours)}</span>
+                                                </div>
+                                                <div class="schedule-item">
+                                                    <span class="schedule-day">Среда:</span>
+                                                    <span class="schedule-time">${formatHours(properties.wednesdayHours)}</span>
+                                                </div>
+                                                <div class="schedule-item">
+                                                    <span class="schedule-day">Четверг:</span>
+                                                    <span class="schedule-time">${formatHours(properties.thursdayHours)}</span>
+                                                </div>
+                                                <div class="schedule-item">
+                                                    <span class="schedule-day">Пятница:</span>
+                                                    <span class="schedule-time">${formatHours(properties.fridayHours)}</span>
+                                                </div>
+                                                <div class="schedule-item">
+                                                    <span class="schedule-day">Суббота:</span>
+                                                    <span class="schedule-time">${formatHours(properties.saturdayHours)}</span>
+                                                </div>
+                                                <div class="schedule-item">
+                                                    <span class="schedule-day">Воскресенье:</span>
+                                                    <span class="schedule-time">${formatHours(properties.sundayHours)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-6">
+                                            <h4 class="font-semibold text-xl mb-2">Услуги:</h4>
+                                            <ul class="text-gray-300">
+                                                ${properties.branchServices}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                modal.style.display = 'block';
+                                toggleBodyScroll(false);
+                            });
+
+                            map.geoObjects.add(placemark);
+
+                            // Центрируем карту на первом филиале
+                            if ('{{ $loop->first }}') {
+                                map.setCenter(coordinates, 12);
+                            }
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('Ошибка геокодирования {{ $branch->address }}:', error);
+                    })
+            );
+        @endforeach
+
+        Promise.all(geocodePromises).then(() => {
+            console.log('Все метки добавлены корректно');
+        }).catch((error) => {
+            console.error('Ошибка при добавлении меток:', error);
+        });
+
+        map.controls.remove('geolocationControl');
+        map.controls.remove('searchControl');
+        map.controls.remove('trafficControl');
+        map.controls.remove('typeSelector');
+        map.controls.remove('rulerControl');
+
+        map.behaviors.enable(['scrollZoom']);
+
+    } catch (error) {
+        console.error('Ошибка инициализации карты:', error);
+        showMapError(error.message);
+    }
+}
+
+// Функция форматирования времени
+function formatHours(time) {
+    return time || 'Выходной';
+}
       // Функция показа ошибки карты
       function showMapError(message) {
         const mapContainer = document.getElementById('map');

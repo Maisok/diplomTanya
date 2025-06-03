@@ -158,8 +158,10 @@
                                 @if($service->staff->isNotEmpty())
                                     <div class="space-y-1">
                                         @foreach($service->staff as $staffMember)
-                                            <span class="bg-blue-500/20 text-blue-200 px-2 py-1 rounded-full text-xs">{{ $staffMember->first_name }} {{ $staffMember->last_name }}</span>
-                                        @endforeach
+                                        <span class="bg-blue-500/20 text-blue-200 px-2 py-1 rounded-full text-xs">
+                                            {{ $staffMember->surname }} {{ $staffMember->name }}
+                                        </span>
+                                    @endforeach
                                     </div>
                                 @else
                                     <span class="text-gray-400">Не назначен</span>

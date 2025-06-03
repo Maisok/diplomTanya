@@ -25,8 +25,52 @@ class User extends Authenticatable
         'phone',
         'password',
         'role',
+        'status',
+        'image',
         'yandex_id',
+        'branch_id',
     ];
+    
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    // Отношение к услугам
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'service_staff', 'staff_id', 'service_id');
+    }
+
+
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class, 'user_id');
+    }
+    
+    public function staffAppointments()
+    {
+        return $this->hasMany(Appointment::class, 'staff_id');
+    }
+
+    
+        public function getAverageRatingAttribute()
+        {
+            return $this->appointments()
+                ->whereNotNull('rating')
+                ->avg('rating');
+        }
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'status' => 'string',
+    ];
+    
+    public function getImageUrlAttribute()
+    {
+        return $this->image ? Storage::url($this->image) : null;
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -54,5 +98,26 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+
+    public function getFormattedPhoneAttribute()
+    {
+        $phone = $this->phone;
+
+        // Удаляем все нецифровые символы
+        $digits = preg_replace('/\D/', '', $phone);
+
+        if (strlen($digits) === 11) {
+            // Заменяем первую цифру на '8'
+            $digits = '8' . substr($digits, 1);
+            return substr($digits, 0, 1) . ' ' .
+                substr($digits, 1, 3) . ' ' .
+                substr($digits, 4, 3) . ' ' .
+                substr($digits, 7, 2) . ' ' .
+                substr($digits, 9, 2);
+        }
+
+        return '8 000 000 00 00'; // Формат по умолчанию
     }
 }

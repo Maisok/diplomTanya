@@ -152,7 +152,7 @@
 
                 <div class="form-group">
                     <label for="status">Статус</label>
-                    <select name="status" id="status" class="form-control">
+                    <select name="status" id="status" class="text-black">
                         <option value="active" {{ old('status', $branch->status ?? '') == 'active' ? 'selected' : '' }}>Активный</option>
                         <option value="inactive" {{ old('status', $branch->status ?? '') == 'inactive' ? 'selected' : '' }}>Не активный</option>
                     </select>
@@ -176,40 +176,38 @@
                 <!-- Расписание работы -->
                 <div class="mb-8">
                     <h2 class="text-xl font-semibold mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
                         Расписание работы
                     </h2>
                     <p class="text-gray-400 text-sm mb-6">Оставьте поля пустыми, если филиал не работает в этот день</p>
-                    
+                
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
-                            <div class="day-card p-4 rounded-lg @error($day.'_open') error-border @enderror @error($day.'_close') error-border @enderror">
-                                <h3 class="text-gray-300 font-semibold mb-3 flex items-center">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
-                                    </svg>
-                                    {{ trans("days.$day") }}
-                                </h3>
+                        @php
+                            $weekDays = [
+                                'monday' => 'Понедельник',
+                                'tuesday' => 'Вторник',
+                                'wednesday' => 'Среда',
+                                'thursday' => 'Четверг',
+                                'friday' => 'Пятница',
+                                'saturday' => 'Суббота',
+                                'sunday' => 'Воскресенье',
+                            ];
+                        @endphp
+                
+                        @foreach($weekDays as $dayKey => $dayLabel)
+                            <div class="day-card p-4 rounded-lg">
+                                <h3 class="text-gray-300 font-semibold mb-3">{{ $dayLabel }}</h3>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label for="{{ $day }}_open" class="block text-gray-400 text-sm mb-2">Открытие</label>
-                                        <input type="time" name="{{ $day }}_open" id="{{ $day }}_open" 
-                                               class="w-full time-input p-2 rounded @error($day.'_open') error-border @enderror"
-                                               value="{{ old($day.'_open') }}">
-                                        @error($day.'_open')
-                                            <p class="error-message">{{ $message }}</p>
-                                        @enderror
+                                        <label for="{{ $dayKey }}_open" class="block text-gray-400 text-sm mb-2">Открытие</label>
+                                        <input type="time" name="{{ $dayKey }}_open" id="{{ $dayKey }}_open"
+                                               value="{{ old($dayKey.'_open') }}"
+                                               class="w-full time-input p-2 rounded">
                                     </div>
                                     <div>
-                                        <label for="{{ $day }}_close" class="block text-gray-400 text-sm mb-2">Закрытие</label>
-                                        <input type="time" name="{{ $day }}_close" id="{{ $day }}_close" 
-                                               class="w-full time-input p-2 rounded @error($day.'_close') error-border @enderror"
-                                               value="{{ old($day.'_close') }}">
-                                        @error($day.'_close')
-                                            <p class="error-message">{{ $message }}</p>
-                                        @enderror
+                                        <label for="{{ $dayKey }}_close" class="block text-gray-400 text-sm mb-2">Закрытие</label>
+                                        <input type="time" name="{{ $dayKey }}_close" id="{{ $dayKey }}_close"
+                                               value="{{ old($dayKey.'_close') }}"
+                                               class="w-full time-input p-2 rounded">
                                     </div>
                                 </div>
                             </div>

@@ -16,10 +16,15 @@ use App\Http\Middleware\PreventConcurrentLogins;
 use Laravel\Socialite\Facades\Socialite;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\StaffAppointmentController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StaffExportController;
 use App\Models\Branch;
+use App\Models\User;
 use App\Models\Service;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
+use App\Models\BranchSchedule;
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/admins', [AdminController::class, 'index'])->name('admins.index');
@@ -28,6 +33,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admins/{user}/edit', [AdminController::class, 'edit'])->name('admins.edit');
     Route::put('/admins/{user}', [AdminController::class, 'update'])->name('admins.update');
     Route::delete('/admins/{user}', [AdminController::class, 'destroy'])->name('admins.destroy');
+
+    Route::get('/appointments', [StaffAppointmentController::class, 'index'])->name('staff.appointments.index');
+
+    Route::get('/clients/export', [StaffExportController::class, 'index'])->name('staff.exports.clients.index');
+    Route::get('/clients/export/download', [StaffExportController::class, 'export'])->name('staff.exports.clients.export');
+});
+
+
+Route::middleware(['auth'])->prefix('admin')->group(function () {
+    Route::get('/reports/completed', [ReportController::class, 'completed'])->name('admin.reports.completed');
+});
+
+// Экспорт
+Route::middleware(['auth'])->prefix('admin')->group(function () {
+    Route::get('/exports/completed', [ExportController::class, 'exportCompleted'])->name('export.completed.appointments');
 });
 
 // Главная и публичные маршруты
@@ -37,40 +57,51 @@ Route::get('/services/{service}', [ServiceShowController::class, 'show'])->name(
 Route::get('/all-specialists', [SpecialistController::class, 'all'])->name('all.specialists');
 Route::get('/services/{service}/appointments2', function(Service $service) {
     $branchId = request()->input('branch_id');
-    
-    $appointments = Appointment::with(['staff'])
-        ->where('service_id', $service->id)
-        ->where('status', '!=', 'cancelled') // <-- Исключаем отменённые
-        ->when($branchId, function($query) use ($branchId) {
-            $query->whereHas('staff', function($q) use ($branchId) {
-                $q->where('branch_id', $branchId);
-            });
-        })
+
+    $appointments = $service->appointments()
+        ->with(['staff' => function($query) use ($branchId) {
+            $query->where('role', 'staff');
+            if ($branchId) {
+                $query->where('branch_id', $branchId);
+            }
+        }])
+        ->where('status', '!=', 'cancelled')
         ->where('appointment_time', '>=', now())
         ->orderBy('appointment_time')
         ->get();
-    
+
     return response()->json($appointments);
 });
 
-    Route::get('/branches/{branch}/schedule', function(Branch $branch) {
-        return response()->json([
-            'monday_open' => $branch->monday_open ? substr($branch->monday_open, 0, 5) : null,
-            'monday_close' => $branch->monday_close ? substr($branch->monday_close, 0, 5) : null,
-            'tuesday_open' => $branch->tuesday_open ? substr($branch->tuesday_open, 0, 5) : null,
-            'tuesday_close' => $branch->tuesday_close ? substr($branch->tuesday_close, 0, 5) : null,
-            'wednesday_open' => $branch->wednesday_open ? substr($branch->wednesday_open, 0, 5) : null,
-            'wednesday_close' => $branch->wednesday_close ? substr($branch->wednesday_close, 0, 5) : null,
-            'thursday_open' => $branch->thursday_open ? substr($branch->thursday_open, 0, 5) : null,
-            'thursday_close' => $branch->thursday_close ? substr($branch->thursday_close, 0, 5) : null,
-            'friday_open' => $branch->friday_open ? substr($branch->friday_open, 0, 5) : null,
-            'friday_close' => $branch->friday_close ? substr($branch->friday_close, 0, 5) : null,
-            'saturday_open' => $branch->saturday_open ? substr($branch->saturday_open, 0, 5) : null,
-            'saturday_close' => $branch->saturday_close ? substr($branch->saturday_close, 0, 5) : null,
-            'sunday_open' => $branch->sunday_open ? substr($branch->sunday_open, 0, 5) : null,
-            'sunday_close' => $branch->sunday_close ? substr($branch->sunday_close, 0, 5) : null
-        ]);
-    });
+Route::get('/branches/{branch}/schedule', function(Branch $branch) {
+    $days = [0, 1, 2, 3, 4, 5, 6];
+    
+    $schedule = [];
+
+    foreach ($days as $day) {
+        $record = $branch->schedule->firstWhere('day_of_week', $day);
+        
+        switch ($day) {
+            case 1: $dayName = 'monday'; break;
+            case 2: $dayName = 'tuesday'; break;
+            case 3: $dayName = 'wednesday'; break;
+            case 4: $dayName = 'thursday'; break;
+            case 5: $dayName = 'friday'; break;
+            case 6: $dayName = 'saturday'; break;
+            case 0: $dayName = 'sunday'; break;
+        }
+
+        if ($record && $record->open_time && $record->close_time) {
+            $schedule["{$dayName}_open"] = substr($record->open_time, 0, 5);
+            $schedule["{$dayName}_close"] = substr($record->close_time, 0, 5);
+        } else {
+            $schedule["{$dayName}_open"] = null;
+            $schedule["{$dayName}_close"] = null;
+        }
+    }
+
+    return response()->json($schedule);
+});
 
 // Социальная аутентификация
 Route::get('login/yandex', [AuthController::class, 'yandex'])->name('yandex');
@@ -192,25 +223,23 @@ Route::prefix('admin')->middleware(['auth', PreventConcurrentLogins::class.':web
 });
  
 Route::get('/branches/{branch}/staff', function(Branch $branch, Request $request) {
-    try {
-        // Проверяем наличие service_id
-        if (!$request->has('service_id')) {
-            return response()->json(['error' => 'Service ID is required'], 400);
-        }
-
-        // Получаем сотрудников по филиалу и сервису, с учетом статуса
-        $staff = $branch->staff()
-            ->where('status', 'active') // <-- Учет статуса
-            ->whereHas('services', function($query) use ($request) {
-                $query->where('services.id', $request->service_id);
-            })
-            ->select('id', 'first_name', 'last_name')
-            ->get();
-
-        return response()->json($staff);
-
-    } catch (\Exception $e) {
-        Log::error("Error in /branches/{branch}/staff: " . $e->getMessage());
-        return response()->json(['error' => 'Server error'], 500);
+    if (!$request->has('service_id')) {
+        return response()->json(['error' => 'Service ID обязателен'], 400);
     }
+
+    $staff = $branch->users()
+        ->where('role', 'staff')
+        ->where('status', 'active') // если есть статус у пользователя
+        ->whereHas('services', function ($query) use ($request) {
+            $query->where('services.id', $request->input('service_id'));
+        })
+        ->get(['id', 'name', 'surname']);
+
+    return response()->json($staff->map(function ($user) {
+        return [
+            'id' => $user->id,
+            'first_name' => $user->name,
+            'last_name' => $user->surname,
+        ];
+    }));
 });

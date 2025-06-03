@@ -61,10 +61,6 @@
             border: 1px solid rgba(255, 255, 255, 0.2) !important;
             color: white !important;
         }
-        .current-photo {
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-        }
         /* Стили для ошибок */
         .error-message {
             color: #F87171;
@@ -78,6 +74,10 @@
         select option {
             background-color: #2D3748;
             color: white;
+        }
+        .current-photo {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.5rem;
         }
     </style>
 </head>
@@ -104,83 +104,77 @@
                 </div>
             @endif
             
-            @if(session('success'))
-                <div class="mb-6 p-4 bg-green-500/10 border border-green-500 rounded-lg">
-                    <p class="text-green-400">{{ session('success') }}</p>
-                </div>
-            @endif
-            
-            <form action="{{ route('admin.staff.update', $staff) }}" method="POST" enctype="multipart/form-data" class="space-y-6" onsubmit="return validateForm()">
+            <form action="{{ route('admin.staff.update', $staff) }}" method="POST" enctype="multipart/form-data" class="space-y-6" id="editStaffForm">
                 @csrf
                 @method('PUT')
                 
+                <!-- Имя -->
                 <div>
-                    <label for="last_name" class="block text-gray-300 mb-3 font-medium">Фамилия*</label>
-                    <input type="text" name="last_name" id="last_name" maxlength="50" 
-                           value="{{ old('last_name', $staff->last_name) }}" required
-                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('last_name') input-error @enderror"
+                    <label for="name" class="block text-gray-300 mb-3 font-medium">Имя*</label>
+                    <input type="text" name="name" id="name" maxlength="50" 
+                           value="{{ old('name', $staff->name) }}" required
+                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('name') input-error @enderror"
                            placeholder="Максимум 50 символов">
-                    @error('last_name')
+                    <p class="error-message hidden" id="nameError"></p>
+                    @error('name')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
-                    <p class="text-gray-400 text-xs mt-2">Максимум 50 символов</p>
                 </div>
                 
+                <!-- Фамилия -->
                 <div>
-                    <label for="first_name" class="block text-gray-300 mb-3 font-medium">Имя*</label>
-                    <input type="text" name="first_name" id="first_name" maxlength="50" 
-                           value="{{ old('first_name', $staff->first_name) }}" required
-                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('first_name') input-error @enderror"
+                    <label for="surname" class="block text-gray-300 mb-3 font-medium">Фамилия*</label>
+                    <input type="text" name="surname" id="surname" maxlength="50" 
+                           value="{{ old('surname', $staff->surname) }}" required
+                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('surname') input-error @enderror"
                            placeholder="Максимум 50 символов">
-                    @error('first_name')
+                    <p class="error-message hidden" id="surnameError"></p>
+                    @error('surname')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
-                    <p class="text-gray-400 text-xs mt-2">Максимум 50 символов</p>
                 </div>
-
-                <div>
-                    <label for="middle_name" class="block text-gray-300 mb-3 font-medium">Отчество</label>
-                    <input type="text" name="middle_name" id="middle_name" maxlength="50" 
-                           value="{{ old('middle_name', $staff->middle_name) }}"
-                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('middle_name') input-error @enderror"
-                           placeholder="Максимум 50 символов">
-                    @error('middle_name')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                    <p class="text-gray-400 text-xs mt-2">Максимум 50 символов</p>
-                </div>
-
+            
+                <!-- Телефон -->
                 <div>
                     <label for="phone" class="block text-gray-300 mb-3 font-medium">Телефон*</label>
                     <input type="text" name="phone" id="phone" maxlength="15" 
-                           value="{{ old('phone', $staff->phone) }}" required
+                            value="{{ old('phone', $staff->formatted_phone) }}" required
                            class="w-full input-field p-3 rounded-lg focus:outline-none @error('phone') input-error @enderror"
                            placeholder="8 999 999 99 99">
+                    <p class="error-message hidden" id="phoneError"></p>
                     @error('phone')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
-                    <p class="text-gray-400 text-xs mt-2">Формат: 8 999 999 99 99</p>
                 </div>
+
 
                 <div>
-                    <label for="status">Статус</label>
-                    <select name="status" id="status" class="form-control">
-                        <option value="active" {{ old('status', $staff->status ?? '') == 'active' ? 'selected' : '' }}>Работает</option>
-                        <option value="inactive" {{ old('status', $staff->status ?? '') == 'inactive' ? 'selected' : '' }}>Не работает</option>
+                    <label for="email" class="block text-gray-300 mb-3 font-medium">Почта*</label>
+                    <input type="text" name="email" id="email" maxlength="100" 
+                            value="{{ old('email', $staff->email) }}" required
+                           class="w-full input-field p-3 rounded-lg focus:outline-none @error('email') input-error @enderror"
+                           placeholder="example@mail.com">
+                    <p class="error-message hidden" id="phoneError"></p>
+                    @error('phone')
+                        <p class="error-message">{{ $message }}</p>
+                    @enderror
+                </div>
+            
+                <!-- Статус -->
+                <div>
+                    <label for="status" class="block text-gray-300 mb-3 font-medium">Статус*</label>
+                    <select name="status" id="status" class="w-full input-field p-3 rounded-lg focus:outline-none">
+                        <option value="active" {{ old('status', $staff->status) == 'active' ? 'selected' : '' }}>Работает</option>
+                        <option value="inactive" {{ old('status', $staff->status) == 'inactive' ? 'selected' : '' }}>Не работает</option>
                     </select>
                 </div>
-
+            
+                <!-- Фото -->
                 <div>
                     <label for="image" class="block text-gray-300 mb-3 font-medium">Фото</label>
                     @if($staff->image)
                         <div class="mb-4 current-photo p-2 inline-block">
                             <img src="{{ asset('storage/' . $staff->image) }}" alt="Текущее фото" class="h-32 rounded-md">
-                            <div class="mt-2">
-                                <label class="inline-flex items-center">
-                                    <input type="checkbox" name="remove_image" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                    <span class="ml-2 text-sm text-gray-400">Удалить текущее фото</span>
-                                </label>
-                            </div>
                         </div>
                     @endif
                     <div class="file-upload relative rounded-lg p-6 text-center @error('image') input-error @enderror">
@@ -193,16 +187,17 @@
                         <p class="mt-2 text-sm text-gray-400">Перетащите новое фото или нажмите для загрузки</p>
                         <p class="mt-1 text-xs text-gray-500">Форматы: JPEG, PNG, JPG, GIF. Максимум 2MB</p>
                     </div>
+                    <p class="error-message hidden" id="imageError"></p>
                     @error('image')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
                 </div>
-
+            
+                <!-- Филиал -->
                 <div>
                     <label for="branch_id" class="block text-gray-300 mb-3 font-medium">Филиал</label>
-                    <select name="branch_id" id="branch_id"
+                    <select name="branch_id" id="branch_id" required
                             class="w-full input-field p-3 rounded-lg focus:outline-none @error('branch_id') input-error @enderror">
-                        <option value="">-- Выберите филиал --</option>
                         @foreach($branches as $branch)
                             <option value="{{ $branch->id }}" 
                                 {{ old('branch_id', $staff->branch_id) == $branch->id ? 'selected' : '' }}>
@@ -214,28 +209,28 @@
                         <p class="error-message">{{ $message }}</p>
                     @enderror
                 </div>
-
+            
+                <!-- Пароль -->
                 <div>
                     <label for="password" class="block text-gray-300 mb-3 font-medium">Новый пароль</label>
                     <input type="password" name="password" id="password"
                            class="w-full input-field p-3 rounded-lg focus:outline-none @error('password') input-error @enderror"
                            placeholder="Оставьте пустым, чтобы не изменять">
+                    <p class="error-message hidden" id="passwordError"></p>
                     @error('password')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
-                    <p class="text-gray-400 text-xs mt-2">Минимум 8 символов</p>
                 </div>
-
-                <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
-                    <a href="{{ route('admin.staff.index') }}" 
-                       class="btn-secondary text-white px-6 py-3 rounded-lg flex items-center justify-center">
+            
+                <!-- Кнопки -->
+                <div class="flex justify-end space-x-4 pt-4">
+                    <a href="{{ route('admin.staff.index') }}" class="btn-secondary px-6 py-3 rounded-lg flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                         Отмена
                     </a>
-                    <button type="submit" 
-                            class="btn-primary text-white px-6 py-3 rounded-lg flex items-center justify-center">
+                    <button type="submit" class="btn-primary px-6 py-3 rounded-lg flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
@@ -247,89 +242,188 @@
     </div>
 
     <script>
-        function capitalizeFirstLetter(string) {
-            return string.charAt(0).toUpperCase() + string.slice(1);
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('editStaffForm');
+            const lastNameInput = document.getElementById('last_name');
+            const firstNameInput = document.getElementById('first_name');
+            const middleNameInput = document.getElementById('middle_name');
+            const phoneInput = document.getElementById('phone');
+            const passwordInput = document.getElementById('password');
+            const imageInput = document.getElementById('image');
 
-        function validateForm() {
-            const lastName = document.getElementById('last_name').value;
-            const firstName = document.getElementById('first_name').value;
-            const middleName = document.getElementById('middle_name').value;
-            const phone = document.getElementById('phone').value;
-
-            // Проверка фамилии
-            if (!/^[a-zA-Zа-яА-Я\s]+$/.test(lastName)) {
-                alert('Фамилия должна содержать только буквы и пробелы');
-                return false;
+            // Функция для форматирования имени (первая буква заглавная)
+            function formatName(name) {
+                return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
             }
 
-            // Проверка имени
-            if (!/^[a-zA-Zа-яА-Я\s]+$/.test(firstName)) {
-                alert('Имя должно содержать только буквы и пробелы');
-                return false;
-            }
+            // Валидация фамилии
+            lastNameInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^a-zA-Zа-яА-ЯёЁ\s\-]/g, '');
+                if (this.value.length > 50) {
+                    this.value = this.value.substring(0, 50);
+                }
+            });
 
-            // Проверка отчества
-            if (middleName && !/^[a-zA-Zа-яА-Я\s]*$/.test(middleName)) {
-                alert('Отчество должно содержать только буквы и пробелы');
-                return false;
-            }
+            // Валидация имени
+            firstNameInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^a-zA-Zа-яА-ЯёЁ\s\-]/g, '');
+                if (this.value.length > 50) {
+                    this.value = this.value.substring(0, 50);
+                }
+            });
 
-            // Проверка телефона
-            if (!/^8 \d{3} \d{3} \d{2} \d{2}$/.test(phone)) {
-                alert('Телефон должен быть в формате: 8 999 999 99 99');
-                return false;
-            }
+            // Валидация отчества
+            middleNameInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^a-zA-Zа-яА-ЯёЁ\s\-]/g, '');
+                if (this.value.length > 50) {
+                    this.value = this.value.substring(0, 50);
+                }
+            });
 
-            return true;
-        }
+            // Форматирование телефона (8 XXX XXX XX XX)
+            phoneInput.addEventListener('input', function(e) {
+                let phone = e.target.value.replace(/\D/g, '');
+                let formattedPhone = '';
 
-        // Обработчики ввода
-        document.getElementById('last_name').addEventListener('input', function() {
-            this.value = this.value.replace(/[^a-zA-Zа-яА-Я\s]/g, '');
-            if (this.value.length > 50) {
-                this.value = this.value.substring(0, 50);
-            }
-            this.value = capitalizeFirstLetter(this.value);
-        });
+                if (phone.length > 0) {
+                    formattedPhone = '8 ';
+                }
+                if (phone.length > 1) {
+                    formattedPhone += phone.substring(1, 4) + ' ';
+                }
+                if (phone.length > 4) {
+                    formattedPhone += phone.substring(4, 7) + ' ';
+                }
+                if (phone.length > 7) {
+                    formattedPhone += phone.substring(7, 9) + ' ';
+                }
+                if (phone.length > 9) {
+                    formattedPhone += phone.substring(9, 11);
+                }
 
-        document.getElementById('first_name').addEventListener('input', function() {
-            this.value = this.value.replace(/[^a-zA-Zа-яА-Я\s]/g, '');
-            if (this.value.length > 50) {
-                this.value = this.value.substring(0, 50);
-            }
-            this.value = capitalizeFirstLetter(this.value);
-        });
+                e.target.value = formattedPhone;
+            });
 
-        document.getElementById('middle_name').addEventListener('input', function() {
-            this.value = this.value.replace(/[^a-zA-Zа-яА-Я\s]/g, '');
-            if (this.value.length > 50) {
-                this.value = this.value.substring(0, 50);
-            }
-            this.value = capitalizeFirstLetter(this.value);
-        });
+            // Валидация пароля (если введен)
+            passwordInput.addEventListener('blur', function() {
+                if (this.value && this.value.length < 8) {
+                    document.getElementById('passwordError').textContent = 'Пароль должен содержать минимум 8 символов';
+                    document.getElementById('passwordError').classList.remove('hidden');
+                    this.classList.add('input-error');
+                } else {
+                    document.getElementById('passwordError').classList.add('hidden');
+                    this.classList.remove('input-error');
+                }
+            });
 
-        document.getElementById('phone').addEventListener('input', function(e) {
-            let phone = e.target.value.replace(/\D/g, '');
-            let formattedPhone = '';
+            // Валидация изображения
+            imageInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+                    const maxSize = 2 * 1024 * 1024; // 2MB
 
-            if (phone.length > 0) {
-                formattedPhone = '8 ';
-            }
-            if (phone.length > 1) {
-                formattedPhone += phone.substring(1, 4) + ' ';
-            }
-            if (phone.length > 4) {
-                formattedPhone += phone.substring(4, 7) + ' ';
-            }
-            if (phone.length > 7) {
-                formattedPhone += phone.substring(7, 9) + ' ';
-            }
-            if (phone.length > 9) {
-                formattedPhone += phone.substring(9, 11);
-            }
+                    if (!validTypes.includes(file.type)) {
+                        document.getElementById('imageError').textContent = 'Допустимые форматы: jpeg, png, jpg, gif';
+                        document.getElementById('imageError').classList.remove('hidden');
+                        this.classList.add('input-error');
+                        this.value = '';
+                    } else if (file.size > maxSize) {
+                        document.getElementById('imageError').textContent = 'Максимальный размер изображения 2MB';
+                        document.getElementById('imageError').classList.remove('hidden');
+                        this.classList.add('input-error');
+                        this.value = '';
+                    } else {
+                        document.getElementById('imageError').classList.add('hidden');
+                        this.classList.remove('input-error');
+                    }
+                }
+            });
 
-            e.target.value = formattedPhone;
+            // Валидация формы перед отправкой
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+
+                // Проверка фамилии
+                if (!lastNameInput.value.trim()) {
+                    document.getElementById('lastNameError').textContent = 'Поле "Фамилия" обязательно для заполнения';
+                    document.getElementById('lastNameError').classList.remove('hidden');
+                    lastNameInput.classList.add('input-error');
+                    isValid = false;
+                } else if (!/^[a-zA-Zа-яА-ЯёЁ\s\-]+$/.test(lastNameInput.value)) {
+                    document.getElementById('lastNameError').textContent = 'Фамилия должна содержать только буквы';
+                    document.getElementById('lastNameError').classList.remove('hidden');
+                    lastNameInput.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    document.getElementById('lastNameError').classList.add('hidden');
+                    lastNameInput.classList.remove('input-error');
+                }
+
+                // Проверка имени
+                if (!firstNameInput.value.trim()) {
+                    document.getElementById('firstNameError').textContent = 'Поле "Имя" обязательно для заполнения';
+                    document.getElementById('firstNameError').classList.remove('hidden');
+                    firstNameInput.classList.add('input-error');
+                    isValid = false;
+                } else if (!/^[a-zA-Zа-яА-ЯёЁ\s\-]+$/.test(firstNameInput.value)) {
+                    document.getElementById('firstNameError').textContent = 'Имя должно содержать только буквы';
+                    document.getElementById('firstNameError').classList.remove('hidden');
+                    firstNameInput.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    document.getElementById('firstNameError').classList.add('hidden');
+                    firstNameInput.classList.remove('input-error');
+                }
+
+                // Проверка отчества (необязательное поле)
+                if (middleNameInput.value.trim() && !/^[a-zA-Zа-яА-ЯёЁ\s\-]*$/.test(middleNameInput.value)) {
+                    document.getElementById('middleNameError').textContent = 'Отчество должно содержать только буквы';
+                    document.getElementById('middleNameError').classList.remove('hidden');
+                    middleNameInput.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    document.getElementById('middleNameError').classList.add('hidden');
+                    middleNameInput.classList.remove('input-error');
+                }
+
+                // Проверка телефона
+                const phoneRegex = /^8 \d{3} \d{3} \d{2} \d{2}$/;
+                if (!phoneInput.value.trim()) {
+                    document.getElementById('phoneError').textContent = 'Поле "Телефон" обязательно для заполнения';
+                    document.getElementById('phoneError').classList.remove('hidden');
+                    phoneInput.classList.add('input-error');
+                    isValid = false;
+                } else if (!phoneRegex.test(phoneInput.value)) {
+                    document.getElementById('phoneError').textContent = 'Телефон должен быть в формате: 8 999 999 99 99';
+                    document.getElementById('phoneError').classList.remove('hidden');
+                    phoneInput.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    document.getElementById('phoneError').classList.add('hidden');
+                    phoneInput.classList.remove('input-error');
+                }
+
+                // Проверка пароля (если введен)
+                if (passwordInput.value && passwordInput.value.length < 8) {
+                    document.getElementById('passwordError').textContent = 'Пароль должен содержать минимум 8 символов';
+                    document.getElementById('passwordError').classList.remove('hidden');
+                    passwordInput.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    document.getElementById('passwordError').classList.add('hidden');
+                    passwordInput.classList.remove('input-error');
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    // Прокрутка к первой ошибке
+                    const firstError = document.querySelector('.error-message:not(.hidden)');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
         });
     </script>
 </body>

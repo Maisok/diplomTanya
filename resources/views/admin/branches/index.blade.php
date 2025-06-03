@@ -101,20 +101,36 @@
               
               <div class="p-5">
                 <div class="space-y-3 mb-6">
-                  @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
-                    <div class="flex justify-between items-center">
-                      <span class="text-gray-400">{{ trans("days.$day") }}</span>
-                      @if($branch->{$day.'_open'})
-                        <span class="day-schedule text-sm">
-                          {{ Carbon\Carbon::parse($branch->{$day.'_open'})->format('H:i') }} - 
-                          {{ Carbon\Carbon::parse($branch->{$day.'_close'})->format('H:i') }}
-                        </span>
-                      @else
-                        <span class="day-off text-sm">Выходной</span>
-                      @endif
-                    </div>
+                  @php
+                      $days = [
+                          1 => ['name' => 'Понедельник', 'key' => 'monday'],
+                          2 => ['name' => 'Вторник', 'key' => 'tuesday'],
+                          3 => ['name' => 'Среда', 'key' => 'wednesday'],
+                          4 => ['name' => 'Четверг', 'key' => 'thursday'],
+                          5 => ['name' => 'Пятница', 'key' => 'friday'],
+                          6 => ['name' => 'Суббота', 'key' => 'saturday'],
+                          0 => ['name' => 'Воскресенье', 'key' => 'sunday'],
+                      ];
+                  @endphp
+              
+                  @foreach($days as $dayOfWeek => $dayInfo)
+                      @php
+                          // Находим запись по day_of_week
+                          $record = $branch->schedule->firstWhere('day_of_week', $dayOfWeek);
+                      @endphp
+                      <div class="flex justify-between items-center">
+                          <span class="text-gray-400">{{ trans("days.".$dayInfo['key']) }}</span>
+                          @if($record && $record->open_time)
+                              <span class="day-schedule text-sm">
+                                  {{ \Carbon\Carbon::parse($record->open_time)->format('H:i') }} - 
+                                  {{ \Carbon\Carbon::parse($record->close_time)->format('H:i') }}
+                              </span>
+                          @else
+                              <span class="day-off text-sm">Выходной</span>
+                          @endif
+                      </div>
                   @endforeach
-                </div>
+              </div>
 
                 @if($branch->status === 'active')
                 <span class="badge badge-success">Работает</span>

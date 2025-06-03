@@ -14,13 +14,19 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('yandex_id', 100)->nullable()->unique(); 
-            $table->string('name', 50); // Уже было ограничение
+            $table->string('name', 50);
             $table->string('surname', 50)->nullable(); 
-            $table->string('phone', 15)->unique()->nullable(); 
-            $table->string('password')->nullable(); 
-            $table->enum('role', ['user', 'admin', 'super_admin'])->default('user');
-            $table->timestamps();
+            $table->string('phone', 15)->unique()->nullable();
             $table->string('email', 100)->nullable()->unique(); 
+            $table->string('password')->nullable(); 
+            $table->enum('role', ['user', 'admin', 'staff'])->default('user');
+            $table->string('image')->nullable();
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->timestamps();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->unsignedBigInteger('branch_id')->nullable();
+            $table->foreign('branch_id')->references('id')->on('branches')->onDelete('set null');
+            $table->rememberToken();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

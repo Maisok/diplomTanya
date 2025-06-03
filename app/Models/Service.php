@@ -9,34 +9,48 @@ class Service extends Model
 {
     use HasFactory;
 
-// app/Models/Service.php
-protected $fillable = [
-    'name',
-    'description',
-    'price',
-    'duration', // Добавляем
-    'image',
-    'staff_id',
-    'category_id', 
-    'status'
-];
 
-    public function staff()
+    protected $fillable = [
+        'name',
+        'description',
+        'price',
+        'image',
+        'category_id',
+        'status'
+    ];
+
+   // Связь: услуга может предоставляться несколькими сотрудниками
+   public function staff()
+   {
+       return $this->belongsToMany(User::class, 'service_staff', 'service_id', 'staff_id');
+   }
+
+   public function users()
     {
-        return $this->belongsToMany(Staff::class, 'service_staff');
+        return $this->belongsToMany(User::class);
     }
 
-    public function category()
-    {
-        return $this->belongsTo(Category::class);
-    }
+    public function services()
+{
+    return $this->belongsToMany(Service::class, 'service_staff');
+}
 
-    public function branches()
-    {
-        return Branch::whereHas('staff.services', function($query) {
-            $query->where('services.id', $this->id);
-        })->distinct()->get();
-    }
+   // Связь: филиалы через сотрудников
+   public function branches()
+   {
+       return $this->hasManyThrough(Branch::class, User::class, 'branch_id', 'id', 'staff_id', 'id');
+   }
+
+   public function category()
+   {
+       return $this->belongsTo(Category::class);
+   }
+
+   public function appointments()
+   {
+       return $this->hasMany(Appointment::class);
+   }
+
 
     public function getAverageRatingAttribute()
     {
@@ -45,8 +59,5 @@ protected $fillable = [
             ->avg('rating');
     }
     
-    public function appointments()
-    {
-        return $this->hasMany(Appointment::class);
-    }
+
 }

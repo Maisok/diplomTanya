@@ -43,6 +43,11 @@
         .select2-container--default .select2-results__option--highlighted[aria-selected] {
             background-color: #3B82F6 !important;
         }
+
+        .select2-results__option {
+    background-color: #4a6b7a !important;
+    color: #E5E7EB !important;
+}
     </style>
      <style>
         .error-message {
@@ -138,7 +143,7 @@
                     <div>
                         <label for="category_id" class="block text-gray-300 mb-3 font-medium">Категория*</label>
                         <select name="category_id" id="category_id" required
-                                class="w-full input-field p-2 rounded-lg focus:outline-none">
+                                class="w-full input-field p-2 rounded-lg focus:outline-none text-black">
                             <option value="">Выберите категорию</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
@@ -153,11 +158,10 @@
 
                     <div>
                         <label for="staff_id" class="block text-gray-300 mb-3 font-medium">Персонал*</label>
-                        <select name="staff_id[]" id="staff_id" multiple required
-                                class="w-full input-field p-2 rounded-lg focus:outline-none">
+                        <select name="staff_id[]" id="staff_id" multiple required class="w-full input-field p-2 rounded-lg focus:outline-none">
                             @foreach($staff as $staffMember)
-                                <option value="{{ $staffMember->id }}" {{ in_array($staffMember->id, old('staff_id', [])) ? 'selected' : '' }}>
-                                    {{ $staffMember->first_name }} {{ $staffMember->last_name }}
+                                <option value="{{ $staffMember->id }}" {{ is_array(old('staff_id')) && in_array($staffMember->id, old('staff_id')) ? 'selected' : '' }}>
+                                    {{ $staffMember->surname }} {{ $staffMember->name }}
                                 </option>
                             @endforeach
                         </select>
@@ -186,7 +190,7 @@
 
                 <div class="form-group">
                     <label for="status">Статус</label>
-                    <select name="status" id="status" class="form-control">
+                    <select name="status" id="status" class="form-control text-black">
                         <option value="active" {{ old('status', $service->status ?? '') == 'active' ? 'selected' : '' }}>Активна</option>
                         <option value="inactive" {{ old('status', $service->status ?? '') == 'inactive' ? 'selected' : '' }}>Не активна</option>
                     </select>

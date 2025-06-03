@@ -113,40 +113,53 @@
                     </div>
                     
                     <!-- Расписание работы -->
-                    <div class="mb-8">
-                        <h2 class="text-xl font-semibold mb-4 flex items-center text-gray-300">
-                            Расписание работы
-                        </h2>
-                        <p class="text-gray-400 text-sm mb-6">Оставьте поля пустыми, если филиал не работает в этот день</p>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
-                                <div class="day-card p-4 rounded-lg">
-                                    <h3 class="text-gray-300 font-semibold mb-3">
-                                        {{ trans("days.$day") }}
-                                    </h3>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label for="{{ $day }}_open" class="block text-gray-400 text-sm mb-2">Открытие</label>
-                                            <input type="time" name="{{ $day }}_open" id="{{ $day }}_open"
-                                                   value="{{ old($day.'_open', $branch->{$day.'_open'} ? Carbon\Carbon::parse($branch->{$day.'_open'})->format('H:i') : '') }}"
-                                                   class="w-full time-input p-2 rounded">
-                                        </div>
-                                        <div>
-                                            <label for="{{ $day }}_close" class="block text-gray-400 text-sm mb-2">Закрытие</label>
-                                            <input type="time" name="{{ $day }}_close" id="{{ $day }}_close"
-                                                   value="{{ old($day.'_close', $branch->{$day.'_close'} ? Carbon\Carbon::parse($branch->{$day.'_close'})->format('H:i') : '') }}"
-                                                   class="w-full time-input p-2 rounded">
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
+                    @php
+$days = [
+    1 => ['name' => 'Понедельник', 'key' => 'monday'],
+    2 => ['name' => 'Вторник', 'key' => 'tuesday'],
+    3 => ['name' => 'Среда', 'key' => 'wednesday'],
+    4 => ['name' => 'Четверг', 'key' => 'thursday'],
+    5 => ['name' => 'Пятница', 'key' => 'friday'],
+    6 => ['name' => 'Суббота', 'key' => 'saturday'],
+    0 => ['name' => 'Воскресенье', 'key' => 'sunday'],
+];
+@endphp
+
+<div class="mb-8">
+    <h3 class="text-xl font-semibold mb-4">График работы</h3>
+    <p class="text-gray-400 text-sm mb-6">Оставьте поля пустыми, если филиал не работает в этот день</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @foreach($days as $dayOfWeek => $dayInfo)
+            @php
+                // Ищем запись по day_of_week
+                $record = $branch->schedule->firstWhere('day_of_week', $dayOfWeek);
+            @endphp
+
+            <div class="day-card p-4 rounded-lg">
+                <h3 class="text-gray-300 font-semibold mb-3">{{ $dayInfo['name'] }}</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="{{ $dayInfo['key'] }}_open" class="block text-gray-400 text-sm mb-2">Открытие</label>
+                        <input type="time" name="{{ $dayInfo['key'] }}_open" id="{{ $dayInfo['key'] }}_open"
+                               value="{{ old($dayInfo['key'].'_open', optional($record)->open_time ? \Carbon\Carbon::parse($record->open_time)->format('H:i') : '') }}"
+                               class="w-full time-input p-2 rounded">
                     </div>
+                    <div>
+                        <label for="{{ $dayInfo['key'] }}_close" class="block text-gray-400 text-sm mb-2">Закрытие</label>
+                        <input type="time" name="{{ $dayInfo['key'] }}_close" id="{{ $dayInfo['key'] }}_close"
+                               value="{{ old($dayInfo['key'].'_close', optional($record)->close_time ? \Carbon\Carbon::parse($record->close_time)->format('H:i') : '') }}"
+                               class="w-full time-input p-2 rounded">
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+</div>
 
                     <div class="form-group">
                         <label for="status">Статус</label>
-                        <select name="status" id="status" class="form-control">
+                        <select name="status" id="status" class="form-control text-black">
                             <option value="active" {{ old('status', $branch->status ?? '') == 'active' ? 'selected' : '' }}>Активный</option>
                             <option value="inactive" {{ old('status', $branch->status ?? '') == 'inactive' ? 'selected' : '' }}>Не активный</option>
                         </select>
@@ -175,58 +188,6 @@
     </div>
 
     <script>
-        // Валидация формы
-        // document.getElementById('branchForm').addEventListener('submit', function(e) {
-        //     const addressInput = document.getElementById('address');
-        //     const addressPattern = /^г\.[а-яА-ЯёЁ\s-]+, ул\.[а-яА-ЯёЁ\s-]+, д\.\d+[а-яА-Я]?$/u;
-            
-        //     // Проверка адреса
-        //     if (!addressPattern.test(addressInput.value)) {
-        //         e.preventDefault();
-        //         alert('Пожалуйста, введите адрес в формате: "г.Город, ул.Улица, д.Номер"');
-        //         addressInput.focus();
-        //         return false;
-        //     }
-            
-        //     // Проверка времени работы
-        //     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-        //     const dayNames = {
-        //         'monday': 'понедельник', 'tuesday': 'вторник', 'wednesday': 'среда',
-        //         'thursday': 'четверг', 'friday': 'пятница', 'saturday': 'суббота', 
-        //         'sunday': 'воскресенье'
-        //     };
-            
-        //     for (const day of days) {
-        //         const open = document.getElementById(`${day}_open`).value;
-        //         const close = document.getElementById(`${day}_close`).value;
-                
-        //         if ((open && !close) || (!open && close)) {
-        //             e.preventDefault();
-        //             alert(`Для ${dayNames[day]} необходимо указать оба времени или оставить оба поля пустыми`);
-        //             return false;
-        //         }
-                
-        //         if (open && close) {
-        //             const start = new Date(`2000-01-01T${open}`);
-        //             const end = new Date(`2000-01-01T${close}`);
-                    
-        //             if (start >= end) {
-        //                 e.preventDefault();
-        //                 alert(`В ${dayNames[day]} время закрытия должно быть позже времени открытия`);
-        //                 return false;
-        //             }
-                    
-        //             const diffMinutes = (end - start) / (1000 * 60);
-        //             if (diffMinutes < 120) {
-        //                 e.preventDefault();
-        //                 alert(`В ${dayNames[day]} филиал должен работать не менее 2 часов`);
-        //                 return false;
-        //             }
-        //         }
-        //     }
-            
-        //     return true;
-        // });
 
         // Обработка загрузки изображения
         const fileUpload = document.querySelector('.file-upload');

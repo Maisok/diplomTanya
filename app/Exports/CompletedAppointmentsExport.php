@@ -6,26 +6,30 @@ use App\Models\Appointment;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Illuminate\Support\Carbon;
 
-class CompletedAppointmentsExport implements FromCollection, WithHeadings, WithMapping
+class CompletedAppointmentsExport implements FromCollection, WithHeadings, WithMapping, WithColumnWidths
 {
     public function collection()
     {
-        return Appointment::where('status', 'completed')->with('service', 'user')->get();
+        return Appointment::where('status', 'completed')
+            ->with(['service', 'user', 'staff', 'branch'])
+            ->get();
     }
 
     public function headings(): array
     {
         return [
             'ID',
-            'Service ID',
-            'User ID',
-            'Service Name',
-            'User Name',
-            'Appointment Time',
-            'Status',
-            'Created At',
-            'Updated At',
+            'Услуга',
+            'Клиент',
+            'Специалист',
+            'Филиал',
+            'Время записи',
+            'Оценка',
+            'Статус',
+            'Дата завершения'
         ];
     }
 
@@ -33,14 +37,29 @@ class CompletedAppointmentsExport implements FromCollection, WithHeadings, WithM
     {
         return [
             $appointment->id,
-            $appointment->service_id,
-            $appointment->user_id,
-            $appointment->service->name,
-            $appointment->user->name,
-            $appointment->appointment_time,
-            $appointment->status,
-            $appointment->created_at,
-            $appointment->updated_at,
+            $appointment->service?->name ?? 'Неизвестная услуга',
+            $appointment->user?->email ?? 'Пользователь удален',
+            optional($appointment->staff)->name ?? 'Специалист удален',
+            optional($appointment->branch)->address ?? 'Филиал удален',
+            Carbon::parse($appointment->appointment_time)->format('d.m.Y H:i'),
+            $appointment->rating ? number_format($appointment->rating, 1) : 'Нет оценки',
+            ucfirst($appointment->status),
+            Carbon::parse($appointment->updated_at)->format('d.m.Y H:i'),
+        ];
+    }
+
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 5,
+            'B' => 30,
+            'C' => 25,
+            'D' => 25,
+            'E' => 40,
+            'F' => 16,
+            'G' => 10,
+            'H' => 12,
+            'I' => 18,
         ];
     }
 }

@@ -104,6 +104,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Телефон</th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Фото</th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Филиал</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Почта</th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Действия</th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Статус</th>
                         </tr>
@@ -113,11 +114,11 @@
                         <tr class="table-row">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-white">
-                                    {{ $employee->last_name }} {{ $employee->first_name }} {{ $employee->middle_name }}
+                                    {{ $employee->name }} {{ $employee->surname }}
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-white">
-                                {{ $employee->phone }}
+                                {{ $employee->formatted_phone }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($employee->image)
@@ -133,6 +134,13 @@
                                 <span class="bg-green-500/20 text-green-200 px-2 py-1 rounded-full text-xs">{{ $employee->branch->address }}</span>
                                 @else
                                 <span class="text-gray-400">Не назначен</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                @if($employee->email)
+                                <span  class="text-sm font-medium text-white">{{ $employee->email }}</span>
+                                @else
+                                <span class="text-gray-400">Отсутсвует</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">

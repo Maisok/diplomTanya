@@ -1,76 +1,84 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Support\Facades\Auth;
 use App\Models\Appointment;
-use App\Models\Staff;
+use App\Models\User as Staff; // Так как Staff — это User с ролью staff
 use App\Models\Service;
 use Illuminate\Http\Request;
 
 class AdminAppointmentController extends Controller
 {
+    /**
+     * Отображение всех записей с фильтрами
+     */
     public function index(Request $request)
     {
-        if (Auth::user()->role !== 'admin') {
-            return redirect()->route('home')->with('error', 'Доступ запрещен');
-        }
-
-        $appointments = Appointment::with(['user', 'service', 'staff'])
-            ->when($request->staff_id, function($query, $staff_id) {
-                return $query->where('staff_id', $staff_id);
+       
+        // Загружаем все записи с возможностью фильтрации
+        $appointments = Appointment::query()
+            ->with([
+                'user', 
+                'service',
+                'staff'  
+            ])
+            ->when($request->input('staff_id'), function ($query, $staff_id) {
+                $query->where('staff_id', $staff_id);
             })
-            ->when($request->service_id, function($query, $service_id) {
-                return $query->where('service_id', $service_id);
+            ->when($request->input('service_id'), function ($query, $service_id) {
+                $query->where('service_id', $service_id);
             })
-            ->when($request->status, function($query, $status) {
-                return $query->where('status', $status);
+            ->when($request->input('status'), function ($query, $status) {
+                $query->where('status', $status);
             })
-            ->orderBy('appointment_time', 'desc')
+            ->orderByDesc('appointment_time')
             ->paginate(15);
-            
-        $staff = Staff::all();
-        $services = Service::all();
-        
+
+        // Для выпадающих списков
+        $staff = Staff::where('role', 'staff')->get(['id', 'name', 'surname']);
+        $services = Service::get(['id', 'name']);
+
         return view('admin.appointments.index', compact('appointments', 'staff', 'services'));
     }
-    
+
+    /**
+     * Активация записи
+     */
     public function activate($id)
     {
-
-        if (Auth::user()->role !== 'admin') {
-            return redirect()->route('home')->with('error', 'Доступ запрещен');
-        } 
-
+       
         $appointment = Appointment::findOrFail($id);
-        $appointment->status = 'active';
-        $appointment->save();
-        
+        $appointment->update(['status' => 'active']);
+
         return back()->with('success', 'Запись активирована');
     }
-    
+
+    /**
+     * Завершение записи
+     */
     public function complete($id)
     {
-        if (Auth::user()->role !== 'admin') {
-            return redirect()->route('home')->with('error', 'Доступ запрещен');
-        }
+       
+
         $appointment = Appointment::findOrFail($id);
-        $appointment->status = 'completed';
-        $appointment->save();
-        
+        $appointment->update(['status' => 'completed']);
+
         return back()->with('success', 'Запись завершена');
     }
-    
+
+    /**
+     * Отмена записи
+     */
     public function cancel($id)
     {
-        if (Auth::user()->role !== 'admin') {
-            return redirect()->route('home')->with('error', 'Доступ запрещен');
-        }
+       
         $appointment = Appointment::findOrFail($id);
         $appointment->update([
             'status' => 'cancelled',
-            'rating' => null // Сбрасываем оценку при отмене
+            'rating' => null,
         ]);
-        
+
         return back()->with('success', 'Запись отменена, оценка сброшена');
     }
 }

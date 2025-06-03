@@ -29,9 +29,9 @@ class Appointment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function staff() // Добавленный метод для связи с моделью Staff
+    public function staff()
     {
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class, 'staff_id');
     }
 
     public function markAsCompleted()

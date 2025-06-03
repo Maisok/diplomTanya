@@ -43,6 +43,11 @@
         .select2-container--default .select2-results__option--highlighted[aria-selected] {
             background-color: #3B82F6 !important;
         }
+
+        .select2-results__option {
+    background-color: #4a6b7a !important;
+    color: #E5E7EB !important;
+}
     </style>
 </head>
 <body class="flex flex-col min-h-screen text-white">
@@ -73,138 +78,138 @@
             </div>
         @endif
             
-            <form action="{{ route('admin.services.update', $service) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-                @csrf
-                @method('PUT')
-                
-                <div>
-                    <label for="name" class="block text-gray-300 mb-3 font-medium">Название услуги*</label>
-                    <input type="text" name="name" id="name" maxlength="100" value="{{ $service->name }}" required
-                           class="w-full input-field p-3 rounded-lg focus:outline-none"
-                           placeholder="Введите название">
-                    @error('name')
-                        <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
-                    @enderror
-                    <p class="text-gray-400 text-xs mt-2">Максимум 100 символов</p>
+        <form action="{{ route('admin.services.update', $service) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            @csrf
+            @method('PUT')
+    
+            <!-- Название -->
+            <div>
+                <label for="name" class="block text-gray-300 mb-3 font-medium">Название услуги*</label>
+                <input type="text" name="name" id="name" maxlength="100"
+                       value="{{ old('name', $service->name) }}" required
+                       class="w-full input-field p-3 rounded-lg focus:outline-none">
+                @error('name')
+                    <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+    
+            <!-- Описание -->
+            <div>
+                <label for="description" class="block text-gray-300 mb-3 font-medium">Описание*</label>
+                <textarea name="description" id="description" maxlength="500" required
+                          class="w-full input-field p-3 rounded-lg focus:outline-none h-32">{{ old('description', $service->description) }}</textarea>
+                @error('description')
+                    <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+    
+            <!-- Цена -->
+            <div>
+                <label for="price" class="block text-gray-300 mb-3 font-medium">Цена*</label>
+                <input type="number" name="price" id="price" step="0.01" min="0" max="99999.99" required
+                       value="{{ old('price', $service->price) }}"
+                       class="w-full input-field p-3 rounded-lg focus:outline-none">
+                @error('price')
+                    <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+    
+            <!-- Категория -->
+            <div>
+                <label for="category_id" class="block text-gray-300 mb-3 font-medium">Категория*</label>
+                <select name="category_id" id="category_id" required class="w-full input-field p-3 rounded-lg focus:outline-none">
+                    <option value="">Выберите категорию</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" {{ old('category_id', $service->category_id) == $category->id ? 'selected' : '' }}>
+                            {{ $category->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('category_id')
+                    <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+    
+            <!-- Персонал -->
+            <div>
+                <label for="staff_id" class="block text-gray-300 mb-3 font-medium">Персонал*</label>
+                <select name="staff_id[]" id="staff_id" multiple required class="w-full input-field p-3 rounded-lg focus:outline-none">
+                    @foreach($staff as $member)
+                        <option value="{{ $member->id }}" {{ in_array($member->id, $selectedStaff ?? []) ? 'selected' : '' }}>
+                            {{ $member->surname }} {{ $member->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('staff_id')
+                    <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+    
+            <!-- Продолжительность -->
+            <div>
+                <label for="duration" class="block text-gray-300 mb-3 font-medium">Продолжительность (минут)*</label>
+                <input type="number" name="duration" id="duration" min="5" max="300" required
+                       value="{{ old('duration', $service->duration) }}"
+                       class="w-full input-field p-3 rounded-lg focus:outline-none">
+                @error('duration')
+                    <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+    
+            <!-- Статус -->
+            <div>
+                <label for="status" class="block text-gray-300 mb-3 font-medium">Статус*</label>
+                <select name="status" id="status" required class="w-full input-field p-3 rounded-lg focus:outline-none bg-[#4a6b7a]">
+                    <option value="active" {{ old('status', $service->status) == 'active' ? 'selected' : '' }}>Активна</option>
+                    <option value="inactive" {{ old('status', $service->status) == 'inactive' ? 'selected' : '' }}>Не активна</option>
+                </select>
+                @error('status')
+                    <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+    
+            <!-- Фото -->
+            <div>
+                <label for="image" class="block text-gray-300 mb-3 font-medium">Фото</label>
+                <div class="relative border-2 border-dashed border-white/30 rounded-lg p-6 text-center hover:border-white/50 transition">
+                    <input type="file" name="image" id="image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <svg class="w-10 h-10 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1116.138 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-400">Перетащите изображение или нажмите для загрузки</p>
+                    <p class="mt-1 text-xs text-gray-500">JPEG, PNG, JPG, GIF. Максимум 2MB</p>
                 </div>
-                
-                <div>
-                    <label for="description" class="block text-gray-300 mb-3 font-medium">Описание*</label>
-                    <textarea name="description" id="description" maxlength="500" required
-                              class="w-full input-field p-3 rounded-lg focus:outline-none h-32"
-                              placeholder="Введите описание">{{ $service->description }}</textarea>
-                    @error('description')
-                        <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
-                    @enderror
-                    <p class="text-gray-400 text-xs mt-2">Максимум 500 символов</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="price" class="block text-gray-300 mb-3 font-medium">Цена*</label>
-                        <input type="number" name="price" id="price" step="0.01" min="0" max="99999.99" 
-                               value="{{ $service->price }}" required
-                               class="w-full input-field p-3 rounded-lg focus:outline-none"
-                               placeholder="0.00">
-                        @error('price')
-                            <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
-                        @enderror
-                        <p class="text-gray-400 text-xs mt-2">Максимум 99999.99</p>
+                @if($service->image)
+                    <div class="mt-4">
+                        <p class="text-gray-400 mb-2">Текущее изображение:</p>
+                        <img src="{{ asset('storage/' . $service->image) }}" alt="Фото услуги"
+                             class="w-full h-40 object-cover rounded-lg border border-white/10">
                     </div>
-
-                    <div>
-                        <label for="duration" class="block text-gray-300 mb-3 font-medium">Продолжительность (минут)*</label>
-                        <input type="number" name="duration" id="duration" min="5" max="300" 
-                               value="{{ $service->duration }}" required
-                               class="w-full input-field p-3 rounded-lg focus:outline-none">
-                        @error('duration')
-                            <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
-                        @enderror
-                        <p class="text-gray-400 text-xs mt-2">От 5 до 300 минут</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="category_id" class="block text-gray-300 mb-3 font-medium">Категория*</label>
-                        <select name="category_id" id="category_id" required
-                                class="w-full input-field p-2 rounded-lg focus:outline-none">
-                            <option value="">Выберите категорию</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}" {{ $service->category_id == $category->id ? 'selected' : '' }}>
-                                    {{ $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('category_id')
-                            <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label for="staff_id" class="block text-gray-300 mb-3 font-medium">Персонал*</label>
-                        <select name="staff_id[]" id="staff_id" multiple required
-                                class="w-full input-field p-2 rounded-lg focus:outline-none">
-                            @foreach($staff as $staffMember)
-                                <option value="{{ $staffMember->id }}" 
-                                    {{ $service->staff->contains($staffMember->id) ? 'selected' : '' }}>
-                                    {{ $staffMember->first_name }} {{ $staffMember->last_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('staff_id')
-                            <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="status">Статус</label>
-                    <select name="status" id="status" class="form-control">
-                        <option value="active" {{ old('status', $service->status ?? '') == 'active' ? 'selected' : '' }}>Активна</option>
-                        <option value="inactive" {{ old('status', $service->status ?? '') == 'inactive' ? 'selected' : '' }}>Не активна</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="image" class="block text-gray-300 mb-3 font-medium">Изображение</label>
-                    @if($service->image)
-                        <div class="mb-4">
-                            <p class="text-gray-400 mb-2">Текущее изображение:</p>
-                            <img src="{{ asset('storage/' . $service->image) }}" alt="Текущее изображение" class="h-32 rounded-lg border border-white/10">
-                        </div>
-                    @endif
-                    <div class="relative border-2 border-dashed border-white/30 rounded-lg p-6 text-center hover:border-white/50 transition">
-                        <input type="file" name="image" id="image" 
-                               class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                               accept="image/jpeg,image/png,image/jpg,image/gif">
-                        <svg class="w-10 h-10 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                        </svg>
-                        <p class="mt-2 text-sm text-gray-400">Перетащите изображение или нажмите для загрузки</p>
-                        <p class="mt-1 text-xs text-gray-500">Форматы: JPEG, PNG, JPG, GIF. Максимум 2MB</p>
-                    </div>
-                    @error('image')
-                        <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
-                    <a href="{{ route('admin.services.index') }}" 
-                       class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-6 py-3 rounded-lg transition-all duration-300 shadow-md text-center flex items-center justify-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                        Отмена
-                    </a>
-                    <button type="submit" 
-                            class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg transition-all duration-300 shadow-md text-center flex items-center justify-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        Обновить
-                    </button>
-                </div>
-            </form>
+                @endif
+                @error('image')
+                    <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+    
+            <!-- Кнопки -->
+            <div class="flex justify-end space-x-4 pt-4">
+                <a href="{{ route('admin.services.index') }}" class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-6 py-3 rounded-lg transition-all duration-300 shadow-md flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Отмена
+                </a>
+                <button type="submit" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg transition-all duration-300 shadow-md flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Сохранить изменения
+                </button>
+            </div>
+        </form>
         </div>
     </div>
 

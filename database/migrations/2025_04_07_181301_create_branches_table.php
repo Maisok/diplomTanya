@@ -13,22 +13,9 @@ return new class extends Migration
     {
         Schema::create('branches', function (Blueprint $table) {
             $table->id();
-            $table->string('image', 255); // Путь к файлу
+            $table->string('image', 255)->nullable(); // Путь к файлу
             $table->string('address', 255); // Адрес может быть длинным
-            $table->time('monday_open')->nullable();
-            $table->time('monday_close')->nullable();
-            $table->time('tuesday_open')->nullable();
-            $table->time('tuesday_close')->nullable();
-            $table->time('wednesday_open')->nullable();
-            $table->time('wednesday_close')->nullable();
-            $table->time('thursday_open')->nullable();
-            $table->time('thursday_close')->nullable();
-            $table->time('friday_open')->nullable();
-            $table->time('friday_close')->nullable();
-            $table->time('saturday_open')->nullable();
-            $table->time('saturday_close')->nullable();
-            $table->time('sunday_open')->nullable();
-            $table->time('sunday_close')->nullable();
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
     }

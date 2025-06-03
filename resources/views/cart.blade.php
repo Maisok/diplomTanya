@@ -172,7 +172,7 @@
           
           <form action="{{ route('appointments.create', $service) }}" method="POST" class="space-y-4">
             @csrf
-            
+              
             <div>
               <label class="block text-sm text-gray-400 mb-1">Филиал</label>
               <select name="branch_id" id="branch_id" 
