@@ -9,6 +9,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AppointmentConfirmation;
 
 class AppointmentController extends Controller
 {
@@ -20,7 +22,7 @@ class AppointmentController extends Controller
         try {
             // Получаем данные формы
             $validated = $this->validateRequest($request);
-
+    
             // Получаем пользователя, мастера, филиал, время
             $user = auth()->user();
             $staff = User::findOrFail($validated['staff_id']);
@@ -28,7 +30,7 @@ class AppointmentController extends Controller
             $appointmentTime = Carbon::createFromFormat('Y-m-d\TH:i', $validated['appointment_time']);
             $duration = $service->duration;
             $buffer = 10;
-
+    
             // Проверяем график работы филиала и доступность времени
             $this->validateBranchWorkingHours($branch, $appointmentTime, $duration, $buffer);
             
@@ -36,15 +38,15 @@ class AppointmentController extends Controller
             if ($staff->branch_id !== $branch->id) {
                 throw new \Exception('Этот специалист не работает в этом филиале');
             }
-
+    
             // Проверяем, что мастер свободен
             $this->validateStaffAvailability($staff, $appointmentTime, $duration, $buffer);
-
+    
             // Проверяем, что пользователь не делает более 3 записей в день
             $this->validateUserDailyAppointments($user->id, $appointmentTime);
-
-            // Если всё ок — создаём запись
-            Appointment::create([
+    
+            // Создаём запись
+            $appointment = Appointment::create([
                 'service_id' => $service->id,
                 'user_id' => $user->id,
                 'staff_id' => $staff->id,
@@ -52,15 +54,20 @@ class AppointmentController extends Controller
                 'appointment_time' => $appointmentTime,
                 'status' => 'active'
             ]);
-
+    
+            // Отправляем подтверждение на почту клиенту
+            Mail::to($user->email)->send(
+                new AppointmentConfirmation($appointment, $service, $staff, $branch)
+            );
+    
             return redirect()->back()
                 ->with('success', 'Запись успешно создана!');
-
+    
         } catch (ValidationException $e) {
             return redirect()->back()
                 ->withErrors($e->validator)
                 ->withInput();
-
+    
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', $e->getMessage())

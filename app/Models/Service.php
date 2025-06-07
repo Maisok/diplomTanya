@@ -15,6 +15,7 @@ class Service extends Model
         'description',
         'price',
         'image',
+        'duration',
         'category_id',
         'status'
     ];
@@ -52,12 +53,23 @@ class Service extends Model
    }
 
 
-    public function getAverageRatingAttribute()
-    {
-        return $this->appointments()
-            ->whereNotNull('rating')
-            ->avg('rating');
-    }
+   // App/Models/User.php
+
+public function getAverageRatingAttribute()
+{
+    return $this->appointments()
+        ->where('status', 'completed')
+        ->whereNotNull('rating')
+        ->avg('rating');
+}
+
+public function getRatingCountAttribute()
+{
+    return $this->appointments()
+        ->where('status', 'completed')
+        ->whereNotNull('rating')
+        ->count();
+}
     
 
 }

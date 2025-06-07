@@ -55,20 +55,26 @@ Route::get('/', [SpecialistController::class, 'index'])->name('home');
 Route::get('/services', [ServiceShowController::class, 'index'])->name('showservice');
 Route::get('/services/{service}', [ServiceShowController::class, 'show'])->name('services.show');
 Route::get('/all-specialists', [SpecialistController::class, 'all'])->name('all.specialists');
+// routes/web.php
+
 Route::get('/services/{service}/appointments2', function(Service $service) {
     $branchId = request()->input('branch_id');
+    $staffId = request()->input('staff_id');
 
-    $appointments = $service->appointments()
-        ->with(['staff' => function($query) use ($branchId) {
-            $query->where('role', 'staff');
-            if ($branchId) {
-                $query->where('branch_id', $branchId);
-            }
-        }])
+    if (!$branchId) {
+        return response()->json([]); // Возвращаем пустой массив
+    }
+
+    $query = Appointment::where('service_id', $service->id)
         ->where('status', '!=', 'cancelled')
         ->where('appointment_time', '>=', now())
-        ->orderBy('appointment_time')
-        ->get();
+        ->where('branch_id', $branchId);
+
+    if ($staffId) {
+        $query->where('staff_id', $staffId);
+    }
+
+    $appointments = $query->with('staff')->get();
 
     return response()->json($appointments);
 });

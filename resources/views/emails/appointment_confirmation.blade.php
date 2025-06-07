@@ -78,7 +78,7 @@
             </div>
             <div class="detail-item">
                 <span class="detail-label">Специалист:</span>
-                <span class="detail-value">{{ $staff->first_name }} {{ $staff->last_name }}</span>
+                <span class="detail-value">{{ $staff->name }} {{ $staff->surname }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Филиал:</span>

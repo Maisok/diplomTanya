@@ -43,8 +43,7 @@ class ServiceController extends Controller
         if (Auth::user()->role !== 'admin') {
             return redirect()->route('home');
         }
-    
-        // Валидация
+                // Валидация
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'description' => 'required|string|max:500',

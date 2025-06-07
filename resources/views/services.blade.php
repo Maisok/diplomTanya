@@ -156,6 +156,7 @@
               <div class="flex-grow">
                 <h2 class="text-xl font-semibold mb-3">{{ $service->name }}</h2>
                 <p class="service-text text-gray-300 mb-4">{{ Str::limit($service->description, 100) }}</p>
+                <p class=" text-gray-300 mb-4">{{ $service->price }} ₽</p>
                 
                 <!-- Рейтинг -->
                 @if($service->average_rating)
@@ -169,6 +170,9 @@
                     </div>
                     <span class="text-sm text-gray-300">({{ number_format($service->average_rating, 1) }})</span>
                   </div>
+                  <span class="text-sm text-gray-300">
+                    {{ $service->rating_count }} отзывов
+                </span>
                 @else
                   <div class="text-sm text-gray-400 mb-4">Нет оценок</div>
                 @endif

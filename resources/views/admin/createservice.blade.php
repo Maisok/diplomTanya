@@ -130,7 +130,7 @@
                     <div>
                         <label for="duration" class="block text-gray-300 mb-3 font-medium">Продолжительность (минут)*</label>
                         <input type="number" name="duration" id="duration" min="5" max="300" 
-                               value="{{ old('duration', 30) }}" required
+                               value="{{ old('duration') }}" required
                                class="w-full input-field p-3 rounded-lg focus:outline-none">
                         @error('duration')
                             <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
@@ -255,11 +255,7 @@
                 }
             });
 
-            // Ограничение ввода для продолжительности
-            $('#duration').on('input', function() {
-                if (this.value < 5) this.value = 5;
-                if (this.value > 300) this.value = 300;
-            });
+           
         });
     </script>
 </body>

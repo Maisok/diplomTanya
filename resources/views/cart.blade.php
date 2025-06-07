@@ -157,6 +157,9 @@
                   @endfor
                   <span class="text-sm ml-1">{{ number_format($service->average_rating, 1) }}</span>
                 </div>
+                <span class="text-sm text-gray-300">
+                  {{ $service->rating_count }} отзывов
+              </span>
               </div>
               @endif
             </div>
@@ -167,6 +170,7 @@
       <!-- Группа карточек в ряд -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Форма записи -->
+        
         <div class="card p-6 lg:col-span-1">
           <h2 class="text-xl font-bold mb-4">Записаться на прием</h2>
           
@@ -200,13 +204,16 @@
                      class="w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
                      required>
             </div>
-            
+            @if (!(auth()->user()->role === 'staff'))
             <button type="submit" 
                     class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg px-4 py-2 shadow transition-all">
               Записаться
             </button>
+            @endif
           </form>
         </div>
+
+        
 
         <!-- Расписание и записи в одной колонке -->
         <div class="lg:col-span-2 space-y-6">
@@ -454,15 +461,27 @@
     
         // Загрузка записей филиала
         async function loadBranchAppointments(branchId) {
-            try {
-                const response = await fetch(`/services/{{ $service->id }}/appointments2?branch_id=${branchId}`);
-                if (!response.ok) throw new Error('Ошибка загрузки записей');
-                const appointments = await response.json();
-                updateAppointmentsTable(appointments);
-            } catch (error) {
-                console.error('Ошибка загрузки записей:', error);
-            }
-        }
+    try {
+        const url = `/services/{{ $service->id }}/appointments2?branch_id=${branchId}`;
+        const response = await fetch(url);
+        const appointments = await response.json();
+        updateAppointmentsTable(appointments);
+    } catch (error) {
+        console.error('Ошибка загрузки записей:', error);
+    }
+}
+
+async function loadStaffAppointments(staffId) {
+    const branchId = branchSelect.value;
+    try {
+        const url = `/services/{{ $service->id }}/appointments2?branch_id=${branchId}&staff_id=${staffId}`;
+        const response = await fetch(url);
+        const appointments = await response.json();
+        updateAppointmentsTable(appointments);
+    } catch (error) {
+        console.error('Ошибка загрузки записей:', error);
+    }
+}
     
         function updateAppointmentsTable(appointments) {
             appointmentsTableBody.innerHTML = '';
@@ -480,8 +499,8 @@
                 const row = document.createElement('tr');
                 row.className = 'border-b border-white/10 hover:bg-white/5';
                 row.innerHTML = `
-                    <td>${appointment.appointment_time}</td>
-                    <td>${appointment.staff?.first_name} ${appointment.staff?.last_name}</td>`;
+    <td>${appointment.appointment_time}</td>
+    <td>${appointment.staff?.name || ''} ${appointment.staff?.surname || ''}</td>`;
                 appointmentsTableBody.appendChild(row);
             });
         }

@@ -4,8 +4,8 @@ namespace App\Mail;
 
 use App\Models\Appointment;
 use App\Models\Service;
-use App\Models\Staff;
 use App\Models\Branch;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -19,7 +19,7 @@ class AppointmentConfirmation extends Mailable
     public $staff;
     public $branch;
 
-    public function __construct(Appointment $appointment, Service $service, Staff $staff, Branch $branch)
+    public function __construct(Appointment $appointment, Service $service, User $staff, Branch $branch)
     {
         $this->appointment = $appointment;
         $this->service = $service;

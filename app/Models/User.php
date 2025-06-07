@@ -54,12 +54,23 @@ class User extends Authenticatable
     }
 
     
-        public function getAverageRatingAttribute()
-        {
-            return $this->appointments()
-                ->whereNotNull('rating')
-                ->avg('rating');
-        }
+    // App/Models/User.php
+
+public function getAverageRatingAttribute()
+{
+    return $this->staffAppointments()
+        ->where('status', 'completed')
+        ->whereNotNull('rating')
+        ->avg('rating');
+}
+
+public function getRatingCountAttribute()
+{
+    return $this->staffAppointments()
+        ->where('status', 'completed')
+        ->whereNotNull('rating')
+        ->count();
+}
 
     protected $casts = [
         'email_verified_at' => 'datetime',

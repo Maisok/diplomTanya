@@ -252,11 +252,7 @@
                 }
             });
 
-            // Ограничение ввода для продолжительности
-            $('#duration').on('input', function() {
-                if (this.value < 5) this.value = 5;
-                if (this.value > 300) this.value = 300;
-            });
+           
         });
     </script>
 </body>

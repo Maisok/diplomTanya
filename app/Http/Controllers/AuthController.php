@@ -132,9 +132,9 @@ protected function formatName($name)
                 
                     $existsInUsers = \App\Models\User::whereRaw("REGEXP_REPLACE(phone, '[^0-9]', '') = ?", [$phoneDigits])->exists();
                 
-                    $existsInStaff = \App\Models\Staff::whereRaw("REGEXP_REPLACE(phone, '[^0-9]', '') = ?", [$phoneDigits])->exists();
+                 
                 
-                    if ($existsInUsers || $existsInStaff) {
+                    if ($existsInUsers) {
                         $fail('Этот номер телефона уже зарегистрирован.');
                     }
                 },

@@ -168,13 +168,14 @@
                   <span class="text-red-400 text-sm">{{ $message }}</span>
               @enderror
           </div>
-          
+          @if (!(auth()->user()->role === 'staff'))
           <div class="md:col-span-2 flex justify-center mt-4">
               <button type="submit" 
                       class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg px-8 py-3 shadow-md transition-all duration-300">
                   Сохранить изменения
               </button>
           </div>
+          @endif
       </form>
       </div>
 
@@ -194,12 +195,13 @@
               @endif
             </div>
           </div>
-          
+          @if (!(auth()->user()->role === 'staff'))
           @if(!$user->yandex_id)
             <button id="emailModalBtn" 
                     class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg px-6 py-2 shadow-md transition-all duration-300">
               {{ $user->email ? 'Подтвердить/Изменить' : 'Добавить email' }}
             </button>
+          @endif
           @endif
         </div>
       </div>
@@ -219,7 +221,7 @@
                 </div>
                 <div>
                   <p class="text-sm text-gray-400">Специалист</p>
-                  <p>{{ $appointment->staff->first_name }} {{ $appointment->staff->last_name }}</p>
+                  <p>{{ $appointment->staff->name }} {{ $appointment->staff->surname }}</p>
                 </div>
                 <div>
                   <p class="text-sm text-gray-400">Филиал</p>
@@ -298,7 +300,7 @@
                 </div>
                 <div>
                   <p class="text-sm text-gray-400">Специалист</p>
-                  <p class="font-medium">{{ $appointment->staff->first_name }} {{ $appointment->staff->last_name }}</p>
+                  <p class="font-medium">{{ $appointment->staff->name }} {{ $appointment->staff->surname }}</p>
                 </div>
                 <div>
                   <p class="text-sm text-gray-400">Филиал</p>

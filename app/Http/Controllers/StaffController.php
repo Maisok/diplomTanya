@@ -80,22 +80,41 @@ class StaffController extends Controller
         $messages = [
             'name.required' => 'Поле "Имя" обязательно для заполнения',
             'name.max' => 'Имя не должно превышать 50 символов',
+            'name.regex' => 'Имя должно содержать только буквы',
+            'surname.required' => 'Поле "Фамилия" обязательно для заполнения',
             'surname.max' => 'Фамилия не должна превышать 50 символов',
-            'phone.required' => 'Поле "Телефон" обязательно для заполнения',
-            'phone.unique' => 'Этот номер телефона уже используется',
+            'surname.regex' => 'Фамилия должна содержать только буквы',
+            'patronymic.regex' => 'Отчество должно содержать только буквы',
+            'email.required' => 'Поле "Email" обязательно для заполнения',
+            'email.email' => 'Введите корректный email',
             'email.unique' => 'Этот email уже используется',
-            'password.required' => 'Поле "Пароль" обязательно для заполнения',
+            'phone.required' => 'Поле "Телефон" обязательно для заполнения',
+            'phone.regex' => 'Телефон должен быть в формате: 8 XXX XXX XX XX',
+            'phone.unique' => 'Этот телефон уже используется',
             'password.min' => 'Пароль должен содержать минимум 8 символов',
             'image.image' => 'Файл должен быть изображением',
             'image.mimes' => 'Допустимые форматы: jpeg, png, jpg, gif',
             'image.max' => 'Максимальный размер изображения 2MB',
-            'branch_id.required' => 'Филиал обязателен к заполнению',
+            'branch_id.exists' => 'Выбранный филиал не существует',
+            'status.required' => 'Поле "Статус" обязательно для заполнения',
+            'status.in' => 'Некорректный статус',
         ];
     
         $validated = $request->validate([
             'name' => 'required|string|max:50',
-            'surname' => 'nullable|string|max:50',
-            'phone' => 'required|string|max:15|unique:users',
+            'surname' => 'required|string|max:50',
+            'phone' => [
+                'required',
+                'string',
+                'max:15',
+                function ($attribute, $value, $fail) {
+                    $normalized = $this->normalizePhone($value);
+                    $exists = User::where(DB::raw("REPLACE(REPLACE(phone, ' ', ''), '+', '')"), str_replace([' ', '+'], '', $normalized))->exists();
+                    if ($exists) {
+                        $fail('Этот телефон уже используется');
+                    }
+                },
+            ],
             'email' => 'nullable|email|max:100|unique:users',
             'password' => 'required|string|min:8',
             'status' => 'required|in:active,inactive',
