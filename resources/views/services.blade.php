@@ -112,6 +112,7 @@
         </form>
       </div>
 
+      
       <!-- Категории -->
       <div class="flex flex-wrap gap-3 justify-center">
         <a 
@@ -130,6 +131,21 @@
             </a>
         @endforeach
     </div>
+
+    <div class="flex justify-center gap-4 mt-6">
+      <button 
+      onclick="applySort('asc')"
+      class="px-5 py-2 rounded-full transition-all {{ request('sort') == 'asc' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md' : 'bg-white/10 hover:bg-white/20' }}"
+  >
+      Сначала дешёвые
+  </button>
+  <button 
+      onclick="applySort('desc')"
+      class="px-5 py-2 rounded-full transition-all {{ request('sort') == 'desc' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md' : 'bg-white/10 hover:bg-white/20' }}"
+  >
+      Сначала дорогие
+  </button>
+  </div
     
     <!-- Пагинация -->
     <div class="mt-8">
@@ -225,6 +241,21 @@
         }
       });
     }
+  </script>
+
+<script>
+  function applySort(order) {
+      const url = new URL(window.location.href);
+      
+      // Удаляем старый параметр sort, если есть
+      url.searchParams.delete('sort');
+      
+      // Добавляем новый
+      url.searchParams.set('sort', order);
+  
+      // Перезагружаем страницу с новым параметром
+      window.location.href = url.toString();
+  }
   </script>
 </body>
 </html>

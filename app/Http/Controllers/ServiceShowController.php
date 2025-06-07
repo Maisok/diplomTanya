@@ -22,13 +22,21 @@ class ServiceShowController extends Controller
     
         // Выбираем только активные услуги с фильтрацией по категории и поиску
         $services = Service::where('status', 'active')
-            ->when($request->category, function ($query, $category) {
-                $query->where('category_id', $category);
-            })
-            ->when($request->search, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%");
-            })
-            ->get();
+        ->when($request->category, function ($query, $category) {
+            $query->where('category_id', $category);
+        })
+        ->when($request->search, function ($query, $search) {
+            $query->where('name', 'like', "%{$search}%");
+        })
+        ->when($request->sort, function ($query, $order) {
+            if ($order === 'asc') {
+                $query->orderBy('price', 'asc');
+            } elseif ($order === 'desc') {
+                $query->orderBy('price', 'desc');
+            }
+        });
+        
+    $services = $services->get();
     
         return view('services', compact('services', 'categories'));
     }
